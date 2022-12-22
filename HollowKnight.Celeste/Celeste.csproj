@@ -1,0 +1,77 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<OutputType>Library</OutputType>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<LangVersion>latest</LangVersion>
+		<Deterministic>true</Deterministic>
+		<ImplicitUsings>true</ImplicitUsings>
+		<DebugType>portable</DebugType>
+		<RootNamespace>Celeste</RootNamespace>
+		<ReferenceInstallation>C:/Users/yunjo/My Drive/Matroid/Games/Hollow Knight/Mods/Resources/Managed 1.5.78.11833</ReferenceInstallation>
+		<ActualInstallation>C:/Program Files (x86)/Steam/steamapps/common/Hollow Knight/hollow_knight_Data/Managed</ActualInstallation>
+	</PropertyGroup>
+	<ItemGroup>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>$(ReferenceInstallation)/Assembly-CSharp.dll</HintPath>
+		</Reference>
+		<Reference Include="MMHOOK_Assembly-CSharp">
+			<HintPath>$(ReferenceInstallation)/MMHOOK_Assembly-CSharp.dll</HintPath>
+		</Reference>
+		<Reference Include="MMHOOK_PlayMaker">
+			<HintPath>$(ReferenceInstallation)/MMHOOK_PlayMaker.dll</HintPath>
+		</Reference>
+		<Reference Include="Mono.Cecil">
+			<HintPath>$(ReferenceInstallation)/Mono.Cecil.dll</HintPath>
+		</Reference>
+		<Reference Include="MonoMod.Utils">
+			<HintPath>$(ReferenceInstallation)/MonoMod.Utils.dll</HintPath>
+		</Reference>
+		<Reference Include="Satchel">
+			<HintPath>$(ReferenceInstallation)/Mods/Satchel/Satchel.dll</HintPath>
+		</Reference>
+		<Reference Include="PlayMaker">
+			<HintPath>$(ReferenceInstallation)/PlayMaker.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.AudioModule">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.AudioModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.ImageConversionModule">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.ImageConversionModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.InputLegacyModule">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.InputLegacyModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.ParticleSystemModule">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.ParticleSystemModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.Physics2DModule">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.Physics2DModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.TextRenderingModule">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.TextRenderingModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>$(ReferenceInstallation)/UnityEngine.UI.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+	<Target Name="Installation" AfterTargets="PostBuildEvent">
+		<RemoveDir Condition="Exists('$(ActualInstallation)/Mods/$(TargetName)')" Directories="$(ActualInstallation)/Mods/$(TargetName)" />
+		<MakeDir Directories="$(ActualInstallation)/Mods/$(TargetName)" />
+		<Copy SourceFiles="$(TargetDir)/$(TargetName).dll;$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(ActualInstallation)/Mods/$(TargetName)" />
+		<MakeDir Directories="$(ActualInstallation)/Mods/$(TargetName)/Archive" />
+		<Copy SourceFiles="$(TargetDir)/$(TargetName).dll;$(TargetDir)/$(TargetName).pdb;" DestinationFolder="$(ActualInstallation)/Mods/$(TargetName)/Archive" />
+		<ZipDirectory SourceDirectory="$(ActualInstallation)/Mods/$(TargetName)/Archive" DestinationFile="$(ActualInstallation)/Mods/$(TargetName)/$(TargetName).zip" />
+		<RemoveDir Directories="$(ActualInstallation)/Mods/$(TargetName)/Archive" />
+		<GetFileHash Files="$(ActualInstallation)/Mods/$(TargetName)/$(TargetName).zip" Algorithm="SHA256">
+			<Output TaskParameter="Items" ItemName="SHA256" />
+		</GetFileHash>
+		<WriteLinesToFile File="$(ActualInstallation)/Mods/$(TargetName)/SHA256.txt" Lines="@(SHA256->'%(FileHash)')" Overwrite="true" Encoding="UTF-8" />
+	</Target>
+</Project>
