@@ -13,12 +13,16 @@ namespace Celeste
                 On.HeroController.HeroDash += HeroController_HeroDash;
                 ModHooks.DashVectorHook += ModHooks_DashVectorHook;
                 On.HeroController.FinishedDashing += HeroController_FinishedDashing;
+                On.HeroController.CanJump += HeroController_CanJump;
+                On.HeroController.HeroJump += HeroController_HeroJump;
             }
             else
             {
                 On.HeroController.HeroDash -= HeroController_HeroDash;
                 ModHooks.DashVectorHook -= ModHooks_DashVectorHook;
                 On.HeroController.FinishedDashing -= HeroController_FinishedDashing;
+                On.HeroController.CanJump -= HeroController_CanJump;
+                On.HeroController.HeroJump -= HeroController_HeroJump;
             }
         }
         private void RotateSprite(int direction)
@@ -104,8 +108,7 @@ namespace Celeste
                 this_.dashingDown = false;
             }
             var s = this_.dashBurst.transform.localScale;
-            s = new Vector3(s.x, 1, s.z);
-            this_.dashBurst.transform.localScale = s;
+            this_.dashBurst.transform.localScale = new Vector3(-1.5085f, 1f, 1.5085f);
             dashingUp = Input.instance.upPressed();
             dashingDown = Input.instance.downPressed();
             dashingLeft = Input.instance.leftPressed();
@@ -155,6 +158,37 @@ namespace Celeste
         private void HeroController_FinishedDashing(On.HeroController.orig_FinishedDashing orig, HeroController self)
         {
             RotateSprite(-1);
+            orig(self);
+        }
+        private bool HeroController_CanJump(On.HeroController.orig_CanJump orig, HeroController self)
+        {
+            var this_ = self;
+            if (this_.hero_state == ActorStates.no_input || this_.hero_state == ActorStates.hard_landing || this_.hero_state == ActorStates.dash_landing || this_.cState.wallSliding || this_.cState.backDashing || this_.cState.jumping || this_.cState.bouncing || this_.cState.shroomBouncing)
+            {
+                return false;
+            }
+            if (this_.cState.onGround)
+            {
+                return true;
+            }
+            if (ReflectionHelper.GetField<HeroController, int>(this_, "ledgeBufferSteps") > 0 && !this_.cState.dead && !this_.cState.hazardDeath && !this_.controlReqlinquished && ReflectionHelper.GetField<HeroController, int>(this_, "headBumpSteps") <= 0 && !this_.CheckNearRoof())
+            {
+                ReflectionHelper.SetField(this_, "ledgeBufferSteps", 0);
+                return true;
+            }
+            return false;
+        }
+        private void HeroController_HeroJump(On.HeroController.orig_HeroJump orig, HeroController self)
+        {
+            var this_ = self;
+            if (this_.cState.dashing)
+            {
+                ReflectionHelper.CallMethod(this_, "FinishedDashing");
+                this_.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
+                var d = !this_.cState.facingRight ? -1 : 1;
+                Momentum.instance.momentum += new Vector2(d * 28, 0);
+                Momentum.instance.resistance = 7.0f / 50;
+            }
             orig(self);
         }
     }
