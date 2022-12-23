@@ -4,7 +4,7 @@ namespace Celeste
     {
         public static Momentum instance;
         public Vector2 momentum = new Vector2(0, 0);
-        public float resistance = 1;
+        public float resistance = 7.0f / 50;
         public Momentum()
         {
             instance = this;
@@ -34,6 +34,16 @@ namespace Celeste
                 {
                     momentum = Vector2.zero;
                 }
+            }
+            if (self.cState.dashing)
+            {
+                var v = ReflectionHelper.GetField<HeroController, Rigidbody2D>(self, "rb2d").velocity;
+                if (self.cState.onGround && v.x != 0 & v.y < 0)
+                {
+                    v = new Vector2(v.x, 0);
+                }
+                var a = self.dashingDown ? Mathf.Atan2(v.x, -v.y) / Mathf.PI * 180 : 0;
+                Dash.instance.RotateSprite(a);
             }
         }
 

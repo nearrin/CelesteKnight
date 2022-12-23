@@ -2,10 +2,17 @@ namespace Celeste
 {
     public class Dash : Module
     {
-        private bool dashingUp = false;
-        private bool dashingDown = false;
-        private bool dashingLeft = false;
-        private bool dashingRight = false;
+        public static Dash instance;
+        private bool dashingUp;
+        private bool dashingDown;
+        private bool dashingLeft;
+        private bool dashingRight;
+        private Vector2 superMomentum = new Vector2(14, 0);
+        private Vector2 hyperMomentum = new Vector2(28, 0);
+        public Dash()
+        {
+            instance = this;
+        }
         public override void SetActive(bool active)
         {
             if (active)
@@ -20,49 +27,9 @@ namespace Celeste
             {
                 On.HeroController.HeroDash -= HeroController_HeroDash;
                 ModHooks.DashVectorHook -= ModHooks_DashVectorHook;
-                On.HeroController.FinishedDashing -= HeroController_FinishedDashing;
                 On.HeroController.CanJump -= HeroController_CanJump;
                 On.HeroController.HeroJump -= HeroController_HeroJump;
             }
-        }
-        private void RotateSprite(int direction)
-        {
-            var h = HeroController.instance;
-            var r = h.transform.localRotation.eulerAngles;
-            var a = 0;
-            if (dashingUp)
-            {
-                if (dashingLeft)
-                {
-                    a = -135;
-                }
-                else if (dashingRight)
-                {
-                    a = 135;
-                }
-                else
-                {
-                    a = 180;
-                }
-            }
-            else if (dashingDown)
-            {
-                if (dashingLeft)
-                {
-                    a = -45;
-                }
-                else if (dashingRight)
-                {
-                    a = 45;
-                }
-            }
-            var newR = new Vector3(r.x, r.y, r.z + direction * a);
-            var c = h.gameObject.GetComponent<BoxCollider2D>().bounds.center;
-            h.transform.localRotation = Quaternion.Euler(newR);
-            var newC = h.gameObject.GetComponent<BoxCollider2D>().bounds.center;
-            var p = h.transform.localPosition;
-            var newP = p + c - newC;
-            h.transform.localPosition = newP;
         }
         private void HeroController_HeroDash(On.HeroController.orig_HeroDash orig, HeroController self)
         {
@@ -107,7 +74,6 @@ namespace Celeste
                 this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
                 this_.dashingDown = false;
             }
-            var s = this_.dashBurst.transform.localScale;
             this_.dashBurst.transform.localScale = new Vector3(-1.5085f, 1f, 1.5085f);
             dashingUp = Input.instance.upPressed();
             dashingDown = Input.instance.downPressed();
@@ -125,7 +91,6 @@ namespace Celeste
                 this__dashEffect.transform.localScale = new Vector3(this_.transform.localScale.x * -1f, this_.transform.localScale.y, this_.transform.localScale.z);
                 ReflectionHelper.SetField(this_, "dashEffect", this__dashEffect);
             }
-            RotateSprite(1);
         }
         private Vector2 ModHooks_DashVectorHook(Vector2 arg)
         {
@@ -155,9 +120,19 @@ namespace Celeste
                 return new Vector2(vX, vY);
             }
         }
+        public void RotateSprite(float a)
+        {
+            var h = HeroController.instance;
+            var c = h.gameObject.GetComponent<BoxCollider2D>().bounds.center;
+            h.transform.localRotation = Quaternion.Euler(new Vector3(0, 0, a));
+            var newC = h.gameObject.GetComponent<BoxCollider2D>().bounds.center;
+            var p = h.transform.localPosition;
+            var newP = p + c - newC;
+            h.transform.localPosition = newP;
+        }
         private void HeroController_FinishedDashing(On.HeroController.orig_FinishedDashing orig, HeroController self)
         {
-            RotateSprite(-1);
+            RotateSprite(0);
             orig(self);
         }
         private bool HeroController_CanJump(On.HeroController.orig_CanJump orig, HeroController self)
@@ -180,14 +155,12 @@ namespace Celeste
         }
         private void HeroController_HeroJump(On.HeroController.orig_HeroJump orig, HeroController self)
         {
-            var this_ = self;
-            if (this_.cState.dashing)
+            if (self.cState.dashing)
             {
-                ReflectionHelper.CallMethod(this_, "FinishedDashing");
-                this_.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
-                var d = !this_.cState.facingRight ? -1 : 1;
-                Momentum.instance.momentum += new Vector2(d * 28, 0);
-                Momentum.instance.resistance = 7.0f / 50;
+                ReflectionHelper.CallMethod(self, "FinishedDashing");
+                self.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
+                var d = !self.cState.facingRight ? -1 : 1;
+                Momentum.instance.momentum += d * (!dashingDown ? superMomentum : hyperMomentum);
             }
             orig(self);
         }
