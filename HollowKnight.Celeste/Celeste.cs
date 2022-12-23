@@ -25,9 +25,15 @@ namespace Celeste
         public override string GetVersion() => "1.0.0.0";
         public override List<(string, string)> GetPreloadNames()
         {
-            return new List<(string, string)>
+            List<(string, string)> p = new List<(string, string)>();
+            foreach (var module in modules)
             {
-            };
+                foreach(var name in module.GetPreloadNames())
+                {
+                    p.Add(name);
+                }
+            }
+            return p;
         }
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {

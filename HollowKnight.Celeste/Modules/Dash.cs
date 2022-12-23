@@ -2,6 +2,9 @@ namespace Celeste
 {
     public class Dash : Module
     {
+        private bool dashingUp = false;
+        private bool dashingDown = false;
+        private bool dashingHorizontal = false;
         public override void SetActive(bool active)
         {
             if (active)
@@ -36,28 +39,61 @@ namespace Celeste
             {
                 this_.FlipSprite();
             }
-            else if (this__inputHandler.inputActions.right.IsPressed)
+            else if (Input.instance.rightPressed())
             {
                 this_.FaceRight();
             }
-            else if (this__inputHandler.inputActions.left.IsPressed)
+            else if (Input.instance.leftPressed())
             {
                 this_.FaceLeft();
             }
             this_.cState.dashing = true;
             ReflectionHelper.SetField(this_, "dashQueueSteps", 0);
             HeroActions inputActions = this__inputHandler.inputActions;
-            if (inputActions.down.IsPressed && !inputActions.left.IsPressed && !inputActions.right.IsPressed)
+            if (Input.instance.upPressed())
             {
-                this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
-                this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
                 this_.dashingDown = true;
+                dashingUp = true;
+                dashingDown = false;
+                if (Input.instance.leftPressed() || Input.instance.rightPressed())
+                {
+                    this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
+                    this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                    dashingHorizontal = true;
+                }
+                else
+                {
+                    this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
+                    this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                    dashingHorizontal = false;
+                }
+            }
+            else if (Input.instance.downPressed())
+            {
+                this_.dashingDown = true;
+                dashingUp = false;
+                dashingDown = true;
+                if (Input.instance.leftPressed() || Input.instance.rightPressed())
+                {
+                    this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
+                    this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                    dashingHorizontal = true;
+                }
+                else
+                {
+                    this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
+                    this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                    dashingHorizontal = false;
+                }
             }
             else
             {
                 this_.dashBurst.transform.localPosition = new Vector3(4.11f, -0.55f, 0.001f);
                 this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
                 this_.dashingDown = false;
+                dashingUp = false;
+                dashingDown = false;
+                dashingHorizontal = true;
             }
             ReflectionHelper.SetField(this_, "dashCooldownTimer", 0.2f);
             if (this_.playerData.GetBool("hasShadowDash") && ReflectionHelper.GetField<HeroController, float>(this_, "shadowDashTimer") <= 0f)
@@ -119,33 +155,31 @@ namespace Celeste
         }
         private Vector2 ModHooks_DashVectorHook(Vector2 arg)
         {
-            var this_ = HeroController.instance;
-            float num = this_.DASH_SPEED;
-            Vector2 result;
-            if (this_.dashingDown)
+            var h = HeroController.instance;
+            var v = h.DASH_SPEED;
+            var vX = (h.cState.facingRight ? 1 : -1) * v;
+            if (dashingUp || dashingDown)
             {
-                result = new Vector2(0f, -num);
-            }
-            else if (this_.cState.facingRight)
-            {
-                if (this_.CheckForBump(CollisionSide.right))
+                var vY = (dashingUp ? 1 : -1) * v;
+                if (dashingHorizontal)
                 {
-                    result = new Vector2(num, (!this_.cState.onGround) ? 5f : 4f);
+                    var k = Mathf.Sqrt(2) / 2;
+                    return new Vector2(k * vX, k * vY);
                 }
                 else
                 {
-                    result = new Vector2(num, 0f);
+                    return new Vector2(0, vY);
                 }
-            }
-            else if (this_.CheckForBump(CollisionSide.left))
-            {
-                result = new Vector2(-num, (!this_.cState.onGround) ? 5f : 4f);
             }
             else
             {
-                result = new Vector2(-num, 0f);
+                var vY = 0f;
+                if (!h.cState.facingRight && h.CheckForBump(CollisionSide.left) || h.cState.facingRight && h.CheckForBump(CollisionSide.right))
+                {
+                    vY = (!h.cState.onGround) ? 5f : 4f;
+                }
+                return new Vector2(vX, vY);
             }
-            return result;
         }
     }
 }

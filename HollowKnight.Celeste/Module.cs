@@ -2,14 +2,15 @@
 {
     public class Module
     {
-        public static Module instance;
-        public Module()
-        {
-            instance = this;
-        }
         protected void Log(string message)
         {
             Celeste.instance.Log(message);
+        }
+        public virtual List<(string, string)> GetPreloadNames()
+        {
+            return new List<(string, string)>
+            {
+            };
         }
         public virtual void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
