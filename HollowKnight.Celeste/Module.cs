@@ -2,20 +2,19 @@
 {
     public class Module
     {
-        private Celeste Celeste_;
-        public Module(Celeste celeste)
+        public static Module instance;
+        public Module()
         {
-            Celeste_ = celeste;
-        }
-        protected bool On()
-        {
-            return Celeste_.settings_.on;
+            instance = this;
         }
         protected void Log(string message)
         {
-            Celeste_.Log(message);
+            Celeste.instance.Log(message);
         }
         public virtual void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
+        {
+        }
+        public virtual void SetActive(bool active)
         {
         }
     }
