@@ -4,7 +4,7 @@ namespace Celeste
     {
         public static Momentum instance;
         public Vector2 momentum = new Vector2(0, 0);
-        public float resistance = 7.0f / 50;
+        public float resistance = 0.4f;
         public Momentum()
         {
             instance = this;

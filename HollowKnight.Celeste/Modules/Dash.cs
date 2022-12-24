@@ -7,8 +7,8 @@ namespace Celeste
         private bool dashingDown;
         private bool dashingLeft;
         private bool dashingRight;
-        private Vector2 superMomentum = new Vector2(14, 0);
-        private Vector2 hyperMomentum = new Vector2(28, 0);
+        private Vector2 superMomentum = new Vector2(16, 0);
+        private Vector2 hyperMomentum = new Vector2(32, -2);
         public Dash()
         {
             instance = this;
@@ -159,8 +159,8 @@ namespace Celeste
             {
                 ReflectionHelper.CallMethod(self, "FinishedDashing");
                 self.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
-                var d = !self.cState.facingRight ? -1 : 1;
-                Momentum.instance.momentum += d * (!dashingDown ? superMomentum : hyperMomentum);
+                var m = !dashingDown ? superMomentum : hyperMomentum;
+                Momentum.instance.momentum += new Vector2((!self.cState.facingRight ? -1 : 1) * m.x, m.y);
             }
             orig(self);
         }
