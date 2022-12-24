@@ -62,7 +62,7 @@ namespace Celeste
             this_.cState.dashing = true;
             ReflectionHelper.SetField(this_, "dashQueueSteps", 0);
             HeroActions inputActions = this__inputHandler.inputActions;
-            if (Input.instance.upPressed() || Input.instance.downPressed())
+            if (Input.instance.downPressed())
             {
                 this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
                 this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
@@ -142,6 +142,10 @@ namespace Celeste
             {
                 return false;
             }
+            if (this_.cState.dashing && !dashingLeft && !dashingRight)
+            {
+                return false;
+            }
             if (this_.cState.onGround)
             {
                 return true;
@@ -159,8 +163,8 @@ namespace Celeste
             {
                 ReflectionHelper.CallMethod(self, "FinishedDashing");
                 self.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
-                var m = !dashingDown ? superMomentum : hyperMomentum;
-                Momentum.instance.momentum += new Vector2((!self.cState.facingRight ? -1 : 1) * m.x, m.y);
+                var m = dashingDown ? hyperMomentum : superMomentum;
+                Momentum.instance.momentum += new Vector2((self.cState.facingRight ? 1 : -1) * m.x, m.y);
             }
             orig(self);
         }

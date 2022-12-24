@@ -42,8 +42,8 @@ namespace Celeste
                 {
                     v = new Vector2(v.x, 0);
                 }
-                var a = self.dashingDown ? Mathf.Atan2(v.x, -v.y) / Mathf.PI * 180 : 0;
-                Dash.instance.RotateSprite(a);
+                var a = self.dashingDown ? Mathf.Atan2(v.x, -v.y) : (Mathf.Atan2(v.y, v.x) + (self.cState.facingRight ? 0 : 1) * Mathf.PI);
+                Dash.instance.RotateSprite(a / Mathf.PI * 180);
             }
         }
 
