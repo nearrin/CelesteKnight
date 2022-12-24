@@ -2,97 +2,78 @@ namespace Celeste
 {
     public class Afterimage : Module
     {
-        public class Settings
-        {
-            public int r = 4;
-            public int g = 2;
-            public int b = 4;
-        }
         public class ImageAnimation : MonoBehaviour
         {
+            float time;
             public tk2dSpriteAnimationClip clip;
             public ImagePool pool;
-            float time;
             void Update()
             {
-                var newAnimator = gameObject.GetAddComponent<tk2dSpriteAnimator>();
-                newAnimator.Play(clip);
                 time += Time.deltaTime;
-                newAnimator.Sprite.color = new Color(Afterimage.afterimage.settings_.r / 4.0f, Afterimage.afterimage.settings_.g / 4.0f, Afterimage.afterimage.settings_.b / 4.0f, 0.5f * (1 - time / 0.5f));
                 if (time > 0.5)
                 {
                     time = 0;
                     gameObject.SetActive(false);
-                    pool.inactiveKnights.Add(gameObject);
+                    pool.inactive.Add(gameObject);
                 }
-                gameObject.tag = "Untagged";
+                var newA = gameObject.GetAddComponent<tk2dSpriteAnimator>();
+                newA.Play(clip);
+                newA.Sprite.color = new Color(1, 0.5f, 1, 0.5f * (1 - time / 0.5f));
             }
         }
         public class ImagePool
         {
-            public GameObject knightTemplate;
-            public List<GameObject> inactiveKnights = new List<GameObject>();
+            public GameObject template;
+            public List<GameObject> inactive = new List<GameObject>();
             public GameObject instantiate(Vector3 positon, Quaternion rotation, Vector3 scale)
             {
-                GameObject newKnight = null;
-                if (inactiveKnights.Count != 0)
+                GameObject newG;
+                if (inactive.Count != 0)
                 {
-                    newKnight = inactiveKnights[0];
-                    newKnight.SetActive(true);
-                    inactiveKnights.RemoveAt(0);
+                    newG = inactive[0];
+                    newG.SetActive(true);
+                    inactive.RemoveAt(0);
                 }
                 else
                 {
-                    newKnight = UnityEngine.Object.Instantiate(knightTemplate);
+                    newG = UnityEngine.Object.Instantiate(template);
                 }
-                newKnight.transform.position = new Vector3(positon.x, positon.y, positon.z + 1e-3f);
-                newKnight.transform.rotation = rotation;
-                newKnight.transform.localScale = scale;
-                newKnight.name = "newKnight";
-                newKnight.tag = "Untagged";
-                return newKnight;
+                newG.transform.position = new Vector3(positon.x, positon.y, positon.z + 1e-3f);
+                newG.transform.rotation = rotation;
+                newG.transform.localScale = scale;
+                return newG;
             }
         }
         public class ImageGenerator : MonoBehaviour
         {
-            public ImagePool pool = new();
             float time;
+            public ImagePool pool = new();
             void Update()
             {
                 time += Time.deltaTime;
-                if (time > 0.1 && HeroController.instance.cState.dashing)
+                if (HeroController.instance.cState.dashing && time > 0.1)
                 {
-                    var originalKnight = HeroController.instance.gameObject;
-                    var newKnight = pool.instantiate(originalKnight.transform.position, originalKnight.transform.rotation, originalKnight.transform.localScale);
-                    DontDestroyOnLoad(newKnight);
-                    try
-                    {
-                        time = 0;
-                        var originalAnimator = originalKnight.GetComponent<tk2dSpriteAnimator>();
-                        var newAnimator = newKnight.GetAddComponent<tk2dSpriteAnimator>();
-                        newAnimator.SetSprite(originalAnimator.Sprite.Collection, originalAnimator.Sprite.spriteId);
-                        newAnimator.Library = originalAnimator.Library;
-                        var originalClip = originalAnimator.CurrentClip;
-                        var newClip = new tk2dSpriteAnimationClip();
-                        newClip.CopyFrom(originalClip);
-                        newClip.frames = new tk2dSpriteAnimationFrame[1];
-                        newClip.frames[0] = originalClip.frames[originalAnimator.CurrentFrame];
-                        newClip.wrapMode = tk2dSpriteAnimationClip.WrapMode.Once;
-                        var imageAnimation = newKnight.GetAddComponent<ImageAnimation>();
-                        imageAnimation.clip = newClip;
-                        imageAnimation.pool = pool;
-                        newAnimator.enabled = false;
-                    }
-                    catch
-                    {
-                        UnityEngine.Object.Destroy(newKnight);
-                    }
+                    time = 0;
+                    var originalG = HeroController.instance.gameObject;
+                    var newG = pool.instantiate(originalG.transform.position, originalG.transform.rotation, originalG.transform.localScale);
+                    DontDestroyOnLoad(newG);
+                    var originalA = originalG.GetComponent<tk2dSpriteAnimator>();
+                    var newA = newG.GetComponent<tk2dSpriteAnimator>();
+                    newA.SetSprite(originalA.Sprite.Collection, originalA.Sprite.spriteId);
+                    newA.Library = originalA.Library;
+                    var originalClip = originalA.CurrentClip;
+                    var newClip = new tk2dSpriteAnimationClip();
+                    newClip.CopyFrom(originalClip);
+                    newClip.frames = new tk2dSpriteAnimationFrame[1];
+                    newClip.frames[0] = originalClip.frames[originalA.CurrentFrame];
+                    newClip.wrapMode = tk2dSpriteAnimationClip.WrapMode.Once;
+                    var imageAnimation = newG.GetAddComponent<ImageAnimation>();
+                    imageAnimation.clip = newClip;
+                    imageAnimation.pool = pool;
                 }
             }
         }
-        public static Afterimage afterimage;
-        public Settings settings_ = new();
-        ImagePool pool = new();
+        GameObject template;
         public override List<(string, string)> GetPreloadNames()
         {
             return new List<(string, string)>
@@ -100,37 +81,46 @@ namespace Celeste
                  ("GG_Mighty_Zote","Battle Control"),
             };
         }
-        private void HeroUpdateHook()
-        {
-            if (HeroController.instance.gameObject.GetComponent<ImageGenerator>() == null)
-            {
-                HeroController.instance.gameObject.GetAddComponent<ImageGenerator>().pool = pool;
-            }
-        }
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
-            afterimage = this;
-            ModHooks.HeroUpdateHook += HeroUpdateHook;
             var battleControl = preloadedObjects["GG_Mighty_Zote"]["Battle Control"];
-            var knightTemplate = battleControl.transform.Find("Zotelings").gameObject.transform.Find("Ordeal Zoteling").gameObject;
-            UnityEngine.Object.Destroy(knightTemplate.GetComponent<PersistentBoolItem>());
-            UnityEngine.Object.Destroy(knightTemplate.GetComponent<ConstrainPosition>());
-            knightTemplate.RemoveComponent<HealthManager>();
-            knightTemplate.RemoveComponent<DamageHero>();
-            knightTemplate.RemoveComponent<UnityEngine.BoxCollider2D>();
-            knightTemplate.RemoveComponent<PlayMakerFSM>();
-            knightTemplate.RemoveComponent<PlayMakerFSM>();
-            knightTemplate.RemoveComponent<PlayMakerFixedUpdate>();
-            knightTemplate.RemoveComponent<UnityEngine.AudioSource>();
-            knightTemplate.RemoveComponent<SpriteFlash>();
-            knightTemplate.RemoveComponent<PersonalObjectPool>();
-            knightTemplate.RemoveComponent<Recoil>();
-            knightTemplate.RemoveComponent<EnemyDreamnailReaction>();
-            knightTemplate.RemoveComponent<EnemyDeathEffectsUninfected>();
-            knightTemplate.RemoveComponent<EnemyHitEffectsUninfected>();
-            knightTemplate.RemoveComponent<ExtraDamageable>();
-            knightTemplate.tag = "Untagged";
-            pool.knightTemplate = knightTemplate;
+            template = battleControl.transform.Find("Zotelings").gameObject.transform.Find("Ordeal Zoteling").gameObject;
+            template.RemoveComponent<AudioSource>();
+            template.RemoveComponent<BoxCollider2D>();
+            template.RemoveComponent<ConstrainPosition>();
+            template.RemoveComponent<DamageHero>();
+            template.RemoveComponent<EnemyDeathEffectsUninfected>();
+            template.RemoveComponent<EnemyDreamnailReaction>();
+            template.RemoveComponent<EnemyHitEffectsUninfected>();
+            template.RemoveComponent<ExtraDamageable>();
+            template.RemoveComponent<HealthManager>();
+            template.RemoveComponent<MeshRenderer>();
+            template.RemoveComponent<MeshFilter>();
+            template.RemoveComponent<PersistentBoolItem>();
+            template.RemoveComponent<PersonalObjectPool>();
+            template.RemoveComponent<PlayMakerFixedUpdate>();
+            template.RemoveComponent<PlayMakerFSM>();
+            template.RemoveComponent<PlayMakerFSM>();
+            template.RemoveComponent<Recoil>();
+            template.RemoveComponent<Rigidbody2D>();
+            template.RemoveComponent<SpriteFlash>();
+            template.tag = "Untagged";
+        }
+        public override void SetActive(bool active)
+        {
+            if (active)
+            {
+                ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
+            }
+            else
+            {
+                ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
+                HeroController.instance?.gameObject.RemoveComponent<ImageGenerator>();
+            }
+        }
+        private void ModHooks_HeroUpdateHook()
+        {
+            HeroController.instance.gameObject.GetAddComponent<ImageGenerator>().pool.template = template;
         }
     }
 }
