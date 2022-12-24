@@ -62,7 +62,7 @@ namespace Celeste
             this_.cState.dashing = true;
             ReflectionHelper.SetField(this_, "dashQueueSteps", 0);
             HeroActions inputActions = this__inputHandler.inputActions;
-            if (Input.instance.downPressed())
+            if (Input.instance.upPressed() && !Input.instance.leftPressed() && !Input.instance.rightPressed() || Input.instance.downPressed())
             {
                 this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
                 this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);

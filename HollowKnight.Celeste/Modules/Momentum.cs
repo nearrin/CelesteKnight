@@ -24,6 +24,13 @@ namespace Celeste
         {
             orig(self);
             var rb2d = ReflectionHelper.GetField<HeroController, Rigidbody2D>(self, "rb2d");
+            var n = momentum.magnitude;
+            if (n >= resistance)
+            {
+                rb2d.velocity += momentum;
+                n -= resistance;
+                momentum = n * momentum.normalized;
+            }
             if (self.cState.onGround && rb2d.velocity.y <= 0)
             {
                 momentum = Vector2.zero;
@@ -32,13 +39,6 @@ namespace Celeste
             if (self.cState.dashing && (!diagonal || Mathf.Sign(rb2d.velocity.x) != (Dash.instance.dashingLeft ? -1 : 1)))
             {
                 momentum = Vector2.zero;
-            }
-            var n = momentum.magnitude;
-            if (n >= resistance)
-            {
-                rb2d.velocity += momentum;
-                n -= resistance;
-                momentum = n * momentum.normalized;
             }
             if (self.cState.dashing)
             {
