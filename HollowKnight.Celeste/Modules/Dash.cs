@@ -3,10 +3,10 @@ namespace Celeste
     public class Dash : Module
     {
         public static Dash instance;
-        private bool dashingUp;
-        private bool dashingDown;
-        private bool dashingLeft;
-        private bool dashingRight;
+        public bool dashingUp;
+        public bool dashingDown;
+        public bool dashingLeft;
+        public bool dashingRight;
         private Vector2 superMomentum = new Vector2(16, 0);
         private Vector2 hyperMomentum = new Vector2(32, -2);
         public Dash()
