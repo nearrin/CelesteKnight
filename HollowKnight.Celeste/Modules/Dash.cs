@@ -79,6 +79,11 @@ namespace Celeste
             dashingDown = Input.instance.downPressed();
             dashingLeft = Input.instance.leftPressed();
             dashingRight = Input.instance.rightPressed();
+            if (!dashingUp && !dashingDown && !dashingLeft && !dashingRight)
+            {
+                dashingLeft = !this_.cState.facingRight;
+                dashingRight = this_.cState.facingRight;
+            }
             ReflectionHelper.SetField(this_, "dashCooldownTimer", 0.2f);
             this_.dashBurst.SendEvent("PLAY");
 #pragma warning disable 612, 618
@@ -163,8 +168,17 @@ namespace Celeste
             {
                 ReflectionHelper.CallMethod(self, "FinishedDashing");
                 self.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
+                var d = (self.cState.facingRight ? 1 : -1);
+                if (Input.instance.leftPressed())
+                {
+                    d = -1;
+                }
+                else if (Input.instance.rightPressed())
+                {
+                    d = 1;
+                }
                 var m = dashingDown ? hyperMomentum : superMomentum;
-                Momentum.instance.momentum += new Vector2((self.cState.facingRight ? 1 : -1) * m.x, m.y);
+                Momentum.instance.momentum += new Vector2(d * m.x, m.y);
             }
             orig(self);
         }
