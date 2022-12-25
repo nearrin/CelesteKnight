@@ -9,17 +9,20 @@ namespace Celeste
             public tk2dSpriteAnimationClip clip;
             void Update()
             {
-                time += Time.deltaTime;
                 if (time > 0.5)
                 {
                     time = 0;
                     gameObject.SetActive(false);
                     generator.pool.inactive.Add(gameObject);
                 }
-                var newA = gameObject.GetAddComponent<tk2dSpriteAnimator>();
-                newA.Play(clip);
-                var c = generator.color;
-                newA.Sprite.color = new Color(c.r, c.g, c.b, c.a * (1 - time / 0.5f));
+                else
+                {
+                    var a = gameObject.GetAddComponent<tk2dSpriteAnimator>();
+                    a.Play(clip);
+                    var c = generator.color;
+                    a.Sprite.color = new Color(c.r, c.g, c.b, c.a * (1 - time / 0.5f));
+                }
+                time += Time.deltaTime;
             }
         }
         public class Pool
@@ -69,11 +72,10 @@ namespace Celeste
         {
             private float time;
             public Pool pool = new();
-            public Color color = new Color(0.28f, 0.72f, 0.84f, 0.75f);
+            public Color color = new Color(0.4f, 0.6f, 0.8f, 0.8f);
             void Update()
             {
-                time += Time.deltaTime;
-                if (HeroController.instance.cState.dashing && time > 0.1)
+                if (HeroController.instance.cState.dashing && !HeroController.instance.cState.shadowDashing && time > 0.075)
                 {
                     time = 0;
                     var originalG = HeroController.instance.gameObject;
@@ -93,6 +95,7 @@ namespace Celeste
                     i.generator = this;
                     i.clip = newC;
                 }
+                time += Time.deltaTime;
             }
         }
         GameObject prefab;

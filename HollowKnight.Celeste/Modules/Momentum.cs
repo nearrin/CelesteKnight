@@ -13,10 +13,12 @@ namespace Celeste
         {
             if (active)
             {
+                On.HeroController.ResetMotion += HeroController_ResetMotion;
                 On.HeroController.FixedUpdate += HeroController_FixedUpdate;
             }
             else
             {
+                On.HeroController.ResetMotion -= HeroController_ResetMotion;
                 On.HeroController.FixedUpdate -= HeroController_FixedUpdate;
             }
         }
@@ -65,6 +67,11 @@ namespace Celeste
                     Dash.instance.AdjustSprite(180, 0);
                 }
             }
+        }
+        private void HeroController_ResetMotion(On.HeroController.orig_ResetMotion orig, HeroController self)
+        {
+            momentum = Vector2.zero;
+            orig(self);
         }
     }
 }
