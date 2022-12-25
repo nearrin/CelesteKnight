@@ -41,6 +41,7 @@ namespace Celeste
         }
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
+            Log("Unity Version: " + Application.unityVersion);
             foreach (var module in modules)
             {
                 module.Initialize(preloadedObjects);

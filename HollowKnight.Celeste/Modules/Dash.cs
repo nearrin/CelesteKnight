@@ -36,6 +36,27 @@ namespace Celeste
                 On.HeroController.CanDoubleJump -= HeroController_CanDoubleJump;
             }
         }
+        private GameObject GetDashEffectHolder()
+        {
+            var h = HeroController.instance;
+            var d = h.transform.Find("dashEffectHolder");
+            return d?.gameObject;
+        }
+        private GameObject GetAddDashEffectHolder()
+        {
+            var h = HeroController.instance;
+            if (GetDashEffectHolder() == null)
+            {
+                var d = new GameObject("dashEffectHolder");
+                d.transform.parent = h.transform;
+                d.transform.localPosition = Vector3.zero;
+                d.transform.localScale = Vector3.one;
+                var b = d.AddComponent<BoxCollider2D>();
+                b.offset = new Vector2(-0.3f, -0.75f);
+                b.isTrigger = true;
+            }
+            return h.transform.Find("dashEffectHolder").gameObject;
+        }
         private void HeroController_HeroDash(On.HeroController.orig_HeroDash orig, HeroController self)
         {
             var self_audioCtrl = ReflectionHelper.GetField<HeroController, HeroAudioController>(self, "audioCtrl");
@@ -65,14 +86,6 @@ namespace Celeste
             }
             self.cState.dashing = true;
             ReflectionHelper.SetField(self, "dashQueueSteps", 0);
-            if (Input.instance.upPressed() && !Input.instance.leftPressed() && !Input.instance.rightPressed() || Input.instance.downPressed())
-            {
-                self.dashingDown = true;
-            }
-            else
-            {
-                self.dashingDown = false;
-            }
             dashingUp = Input.instance.upPressed();
             dashingDown = Input.instance.downPressed();
             dashingLeft = Input.instance.leftPressed();
@@ -82,6 +95,7 @@ namespace Celeste
                 dashingLeft = !self.cState.facingRight;
                 dashingRight = self.cState.facingRight;
             }
+            self.dashingDown = !dashingLeft && !dashingRight;
             ReflectionHelper.SetField(self, "dashCooldownTimer", 0.2f);
             if (Celeste.instance.settings_.shadeCloak && self.playerData.GetBool("hasShadowDash") && ReflectionHelper.GetField<HeroController, float>(self, "shadowDashTimer") <= 0f)
             {
@@ -118,6 +132,7 @@ namespace Celeste
             }
             else
             {
+                self.dashBurst.transform.parent = GetAddDashEffectHolder().transform;
                 if (self.dashingDown)
                 {
                     self.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
@@ -148,7 +163,11 @@ namespace Celeste
             if (dashingDown && (dashingLeft || dashingRight) && h.cState.onGround)
             {
                 h.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
-                ReflectionHelper.GetField<HeroController, GameObject>(h, "dashEffect").transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+                var dashEffect = ReflectionHelper.GetField<HeroController, GameObject>(h, "dashEffect");
+                if (dashEffect != null)
+                {
+                    dashEffect.transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+                }
             }
             var v = h.DASH_SPEED;
             var vX = (h.cState.facingRight ? 1 : -1) * v;
@@ -230,19 +249,33 @@ namespace Celeste
                 return new Vector2(vX, 0);
             }
         }
-        public void RotateSprite(float a)
+        public void AdjustSprite(float knight, float holder)
         {
+            var rotate = (GameObject g, float a) =>
+            {
+                var c = g.GetComponent<BoxCollider2D>().bounds.center;
+                g.transform.localRotation = Quaternion.Euler(new Vector3(0, 0, a));
+                var newC = g.GetComponent<BoxCollider2D>().bounds.center;
+                var p = g.transform.localPosition;
+                var dP = c - newC;
+                var h = HeroController.instance;
+                if (g.transform.parent == h.transform && h.transform.localScale.x < 0)
+                {
+                    dP = new Vector3(-dP.x, dP.y, dP.z);
+                }
+                g.transform.localPosition = p + dP;
+            };
             var h = HeroController.instance;
-            var c = h.GetComponent<BoxCollider2D>().bounds.center;
-            h.transform.localRotation = Quaternion.Euler(new Vector3(0, 0, a));
-            var newC = h.GetComponent<BoxCollider2D>().bounds.center;
-            var p = h.transform.localPosition;
-            var newP = p + c - newC;
-            h.transform.localPosition = newP;
+            rotate(h.gameObject, knight);
+            var d = GetDashEffectHolder();
+            if (d != null)
+            {
+                rotate(GetDashEffectHolder(), holder);
+            }
         }
         private void HeroController_CancelDash(On.HeroController.orig_CancelDash orig, HeroController self)
         {
-            RotateSprite(0);
+            AdjustSprite(0, 0);
             orig(self);
             if (dashingUp && !dashingLeft && !dashingRight)
             {
@@ -251,7 +284,7 @@ namespace Celeste
         }
         private void HeroController_FinishedDashing(On.HeroController.orig_FinishedDashing orig, HeroController self)
         {
-            RotateSprite(0);
+            AdjustSprite(0, 0);
             orig(self);
             if (dashingUp && !dashingLeft && !dashingRight)
             {

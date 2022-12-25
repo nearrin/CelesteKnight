@@ -24,7 +24,7 @@ namespace Celeste
         }
         public class Pool
         {
-            public GameObject template;
+            public GameObject prefab;
             public List<GameObject> inactive = new List<GameObject>();
             public GameObject instantiate(Vector3 positon, Quaternion rotation, Vector3 scale)
             {
@@ -37,7 +37,27 @@ namespace Celeste
                 }
                 else
                 {
-                    newG = UnityEngine.Object.Instantiate(template);
+                    newG = UnityEngine.Object.Instantiate(prefab);
+                    newG.RemoveComponent<AudioSource>();
+                    newG.RemoveComponent<BoxCollider2D>();
+                    newG.RemoveComponent<ConstrainPosition>();
+                    newG.RemoveComponent<DamageHero>();
+                    newG.RemoveComponent<EnemyDeathEffectsUninfected>();
+                    newG.RemoveComponent<EnemyDreamnailReaction>();
+                    newG.RemoveComponent<EnemyHitEffectsUninfected>();
+                    newG.RemoveComponent<ExtraDamageable>();
+                    newG.RemoveComponent<HealthManager>();
+                    newG.RemoveComponent<MeshRenderer>();
+                    newG.RemoveComponent<MeshFilter>();
+                    newG.RemoveComponent<PersistentBoolItem>();
+                    newG.RemoveComponent<PersonalObjectPool>();
+                    newG.RemoveComponent<PlayMakerFixedUpdate>();
+                    newG.RemoveComponent<PlayMakerFSM>();
+                    newG.RemoveComponent<PlayMakerFSM>();
+                    newG.RemoveComponent<Recoil>();
+                    newG.RemoveComponent<Rigidbody2D>();
+                    newG.RemoveComponent<SpriteFlash>();
+                    newG.tag = "Untagged";
                 }
                 newG.transform.position = new Vector3(positon.x, positon.y, positon.z + 1e-3f);
                 newG.transform.rotation = rotation;
@@ -75,7 +95,7 @@ namespace Celeste
                 }
             }
         }
-        GameObject template;
+        GameObject prefab;
         public override List<(string, string)> GetPreloadNames()
         {
             return new List<(string, string)>
@@ -86,27 +106,7 @@ namespace Celeste
         public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
         {
             var battleControl = preloadedObjects["GG_Mighty_Zote"]["Battle Control"];
-            template = battleControl.transform.Find("Zotelings").gameObject.transform.Find("Ordeal Zoteling").gameObject;
-            template.RemoveComponent<AudioSource>();
-            template.RemoveComponent<BoxCollider2D>();
-            template.RemoveComponent<ConstrainPosition>();
-            template.RemoveComponent<DamageHero>();
-            template.RemoveComponent<EnemyDeathEffectsUninfected>();
-            template.RemoveComponent<EnemyDreamnailReaction>();
-            template.RemoveComponent<EnemyHitEffectsUninfected>();
-            template.RemoveComponent<ExtraDamageable>();
-            template.RemoveComponent<HealthManager>();
-            template.RemoveComponent<MeshRenderer>();
-            template.RemoveComponent<MeshFilter>();
-            template.RemoveComponent<PersistentBoolItem>();
-            template.RemoveComponent<PersonalObjectPool>();
-            template.RemoveComponent<PlayMakerFixedUpdate>();
-            template.RemoveComponent<PlayMakerFSM>();
-            template.RemoveComponent<PlayMakerFSM>();
-            template.RemoveComponent<Recoil>();
-            template.RemoveComponent<Rigidbody2D>();
-            template.RemoveComponent<SpriteFlash>();
-            template.tag = "Untagged";
+            prefab = battleControl.transform.Find("Zotelings").gameObject.transform.Find("Ordeal Zoteling").gameObject;
         }
         public override void SetActive(bool active)
         {
@@ -122,7 +122,7 @@ namespace Celeste
         }
         private void ModHooks_HeroUpdateHook()
         {
-            HeroController.instance.gameObject.GetAddComponent<Generator>().pool.template = template;
+            HeroController.instance.gameObject.GetAddComponent<Generator>().pool.prefab = prefab;
         }
     }
 }
