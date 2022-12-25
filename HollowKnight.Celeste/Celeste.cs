@@ -9,6 +9,7 @@ namespace Celeste
     public class Settings
     {
         public bool on = true;
+        public bool doubleJump = false;
         public bool shadeCloak = false;
     }
     public class Celeste : Mod, IMenuMod, IGlobalSettings<Settings>
@@ -71,6 +72,19 @@ namespace Celeste
                         SetActive(settings_.on);
                     },
                     Loader = () => settings_.on ? 0 : 1
+                }
+            );
+            menus.Add(
+                new()
+                {
+                    Name = "Double Jump",
+                    Values = new string[]
+                    {
+                        Language.Language.Get("MOH_ON", "MainMenu"),
+                        Language.Language.Get("MOH_OFF", "MainMenu")
+                    },
+                    Saver = i => settings_.doubleJump = i == 0,
+                    Loader = () => settings_.doubleJump ? 0 : 1
                 }
             );
             menus.Add(

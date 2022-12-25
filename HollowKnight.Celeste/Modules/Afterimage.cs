@@ -49,7 +49,7 @@ namespace Celeste
         {
             private float time;
             public Pool pool = new();
-            public Color color = new Color(0.28f, 0.72f, 0.84f, 0.5f);
+            public Color color = new Color(0.28f, 0.72f, 0.84f, 0.75f);
             void Update()
             {
                 time += Time.deltaTime;

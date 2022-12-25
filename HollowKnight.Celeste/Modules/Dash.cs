@@ -8,6 +8,7 @@ namespace Celeste
         public bool dashingLeft;
         public bool dashingRight;
         private Vector2 upDashMomentum = new Vector2(0, 4);
+        private Vector2 wallbounceMomentum = new Vector2(0, 20);
         private Vector2 superMomentum = new Vector2(16, 0);
         private Vector2 hyperMomentum = new Vector2(32, -2);
         public Dash()
@@ -24,6 +25,7 @@ namespace Celeste
                 On.HeroController.FinishedDashing += HeroController_FinishedDashing;
                 On.HeroController.CanJump += HeroController_CanJump;
                 On.HeroController.HeroJump += HeroController_HeroJump;
+                On.HeroController.CanDoubleJump += HeroController_CanDoubleJump;
             }
             else
             {
@@ -31,6 +33,7 @@ namespace Celeste
                 ModHooks.DashVectorHook -= ModHooks_DashVectorHook;
                 On.HeroController.CanJump -= HeroController_CanJump;
                 On.HeroController.HeroJump -= HeroController_HeroJump;
+                On.HeroController.CanDoubleJump -= HeroController_CanDoubleJump;
             }
         }
         private void HeroController_HeroDash(On.HeroController.orig_HeroDash orig, HeroController self)
@@ -160,6 +163,41 @@ namespace Celeste
                 }
                 else
                 {
+                    var y = dashingUp ? c.bounds.max.y : c.bounds.min.y;
+                    var l = new Vector2(c.bounds.min.x, y);
+                    var r = new Vector2(c.bounds.max.x, y);
+                    var d = dashingUp ? Vector2.up : Vector2.down;
+                    var rL = Physics2D.Raycast(l, d, 0.05f, 256);
+                    var rR = Physics2D.Raycast(r, d, 0.05f, 256);
+                    var check = (RaycastHit2D r1, RaycastHit2D r2) =>
+                    {
+                        return r1.collider == null && r2.collider != null || r1.collider != null && r2.collider == null;
+                    };
+                    if (check(rL, rR))
+                    {
+                        for (int i = 0; i < 32; ++i)
+                        {
+                            var m = new Vector2((l.x + r.x) / 2, y);
+                            var rM = Physics2D.Raycast(m, d, 0.05f, 256);
+                            if (check(rM, rL))
+                            {
+                                r = m;
+                            }
+                            else
+                            {
+                                l = m;
+                            }
+                        }
+                        var p = h.transform.position;
+                        if (rL.collider == null)
+                        {
+                            h.transform.position = new Vector3(p.x + l.x - c.bounds.max.x - 0.01f, p.y, p.z);
+                        }
+                        else
+                        {
+                            h.transform.position = new Vector3(p.x + r.x - c.bounds.min.x + 0.01f, p.y, p.z);
+                        }
+                    }
                     return new Vector2(0, vY);
                 }
             }
@@ -187,7 +225,7 @@ namespace Celeste
                         }
                     }
                     var p = h.transform.position;
-                    h.transform.position = new Vector3(p.x, p.y + t.y - c.bounds.min.y, p.z);
+                    h.transform.position = new Vector3(p.x, p.y + t.y - c.bounds.min.y + 0.01f, p.z);
                 }
                 return new Vector2(vX, 0);
             }
@@ -273,6 +311,14 @@ namespace Celeste
                 Momentum.instance.momentum += new Vector2(d * m.x, m.y);
             }
             orig(self);
+        }
+        private bool HeroController_CanDoubleJump(On.HeroController.orig_CanDoubleJump orig, HeroController self)
+        {
+            if (!Celeste.instance.settings_.doubleJump)
+            {
+                return false;
+            }
+            return orig(self);
         }
     }
 }
