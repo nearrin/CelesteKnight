@@ -20,6 +20,7 @@ namespace Celeste
             {
                 On.HeroController.HeroDash += HeroController_HeroDash;
                 ModHooks.DashVectorHook += ModHooks_DashVectorHook;
+                On.HeroController.CancelDash += HeroController_CancelDash;
                 On.HeroController.FinishedDashing += HeroController_FinishedDashing;
                 On.HeroController.CanJump += HeroController_CanJump;
                 On.HeroController.HeroJump += HeroController_HeroJump;
@@ -135,6 +136,15 @@ namespace Celeste
             var p = h.transform.localPosition;
             var newP = p + c - newC;
             h.transform.localPosition = newP;
+        }
+        private void HeroController_CancelDash(On.HeroController.orig_CancelDash orig, HeroController self)
+        {
+            RotateSprite(0);
+            orig(self);
+            if (dashingUp && !dashingLeft && !dashingRight)
+            {
+                Momentum.instance.momentum = upDashMomentum;
+            }
         }
         private void HeroController_FinishedDashing(On.HeroController.orig_FinishedDashing orig, HeroController self)
         {
