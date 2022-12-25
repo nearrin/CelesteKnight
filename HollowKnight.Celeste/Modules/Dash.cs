@@ -35,73 +35,118 @@ namespace Celeste
         }
         private void HeroController_HeroDash(On.HeroController.orig_HeroDash orig, HeroController self)
         {
-            var this_ = self;
-            var this__audioCtrl = ReflectionHelper.GetField<HeroController, HeroAudioController>(this_, "audioCtrl");
-            var this__inputHandler = ReflectionHelper.GetField<HeroController, InputHandler>(this_, "inputHandler");
-            if (!this_.cState.onGround && !this_.inAcid)
+            var self_audioCtrl = ReflectionHelper.GetField<HeroController, HeroAudioController>(self, "audioCtrl");
+            var self_autoSource = ReflectionHelper.GetField<HeroController, AudioSource>(self, "audioSource");
+            if (!self.cState.onGround && !self.inAcid)
             {
-                ReflectionHelper.SetField(this_, "airDashed", true);
+                ReflectionHelper.SetField(self, "airDashed", true);
             }
-            ReflectionHelper.CallMethod(this_, "ResetAttacksDash");
-            ReflectionHelper.CallMethod(this_, "CancelBounce");
-            this__audioCtrl.StopSound(HeroSounds.FOOTSTEPS_RUN);
-            this__audioCtrl.StopSound(HeroSounds.FOOTSTEPS_WALK);
-            this__audioCtrl.PlaySound(HeroSounds.DASH);
-            ReflectionHelper.CallMethod(this_, "ResetLook");
-            this_.cState.recoiling = false;
-            if (this_.cState.wallSliding)
+            ReflectionHelper.CallMethod(self, "ResetAttacksDash");
+            ReflectionHelper.CallMethod(self, "CancelBounce");
+            self_audioCtrl.StopSound(HeroSounds.FOOTSTEPS_RUN);
+            self_audioCtrl.StopSound(HeroSounds.FOOTSTEPS_WALK);
+            self_audioCtrl.PlaySound(HeroSounds.DASH);
+            ReflectionHelper.CallMethod(self, "ResetLook");
+            self.cState.recoiling = false;
+            if (self.cState.wallSliding)
             {
-                this_.FlipSprite();
+                self.FlipSprite();
             }
             else if (Input.instance.rightPressed())
             {
-                this_.FaceRight();
+                self.FaceRight();
             }
             else if (Input.instance.leftPressed())
             {
-                this_.FaceLeft();
+                self.FaceLeft();
             }
-            this_.cState.dashing = true;
-            ReflectionHelper.SetField(this_, "dashQueueSteps", 0);
-            HeroActions inputActions = this__inputHandler.inputActions;
+            self.cState.dashing = true;
+            ReflectionHelper.SetField(self, "dashQueueSteps", 0);
             if (Input.instance.upPressed() && !Input.instance.leftPressed() && !Input.instance.rightPressed() || Input.instance.downPressed())
             {
-                this_.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
-                this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
-                this_.dashingDown = true;
+                self.dashingDown = true;
             }
             else
             {
-                this_.dashBurst.transform.localPosition = new Vector3(4.11f, -0.55f, 0.001f);
-                this_.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
-                this_.dashingDown = false;
+                self.dashingDown = false;
             }
-            this_.dashBurst.transform.localScale = new Vector3(-1.5085f, 1f, 1.5085f);
             dashingUp = Input.instance.upPressed();
             dashingDown = Input.instance.downPressed();
             dashingLeft = Input.instance.leftPressed();
             dashingRight = Input.instance.rightPressed();
             if (!dashingUp && !dashingDown && !dashingLeft && !dashingRight)
             {
-                dashingLeft = !this_.cState.facingRight;
-                dashingRight = this_.cState.facingRight;
+                dashingLeft = !self.cState.facingRight;
+                dashingRight = self.cState.facingRight;
             }
-            ReflectionHelper.SetField(this_, "dashCooldownTimer", 0.2f);
-            this_.dashBurst.SendEvent("PLAY");
-#pragma warning disable 612, 618
-            this_.dashParticlesPrefab.GetComponent<ParticleSystem>().enableEmission = true;
-#pragma warning restore 612, 618
-            VibrationManager.PlayVibrationClipOneShot(this_.dashVibration, null, false, "");
-            if (this_.cState.onGround)
+            ReflectionHelper.SetField(self, "dashCooldownTimer", 0.2f);
+            if (Celeste.instance.settings_.shadeCloak && self.playerData.GetBool("hasShadowDash") && ReflectionHelper.GetField<HeroController, float>(self, "shadowDashTimer") <= 0f)
             {
-                var this__dashEffect = this_.backDashPrefab.Spawn(this_.transform.position);
-                this__dashEffect.transform.localScale = new Vector3(this_.transform.localScale.x * -1f, this_.transform.localScale.y, this_.transform.localScale.z);
-                ReflectionHelper.SetField(this_, "dashEffect", this__dashEffect);
+                self.cState.shadowDashing = true;
+                ReflectionHelper.SetField(self, "shadowDashTimer", self.SHADOW_DASH_COOLDOWN);
+                if (self.playerData.GetBool("equippedCharm_16"))
+                {
+                    self_autoSource.PlayOneShot(self.sharpShadowClip, 1f);
+                    self.sharpShadowPrefab.SetActive(true);
+                }
+                else
+                {
+                    self_autoSource.PlayOneShot(self.shadowDashClip, 1f);
+                }
+                GameObject dashEffect;
+                if (self.dashingDown)
+                {
+                    dashEffect = self.shadowdashDownBurstPrefab.Spawn(self.transform, new Vector3(0, 3.5f, 0.00101f));
+                    dashEffect.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                }
+                else
+                {
+                    dashEffect = self.shadowdashBurstPrefab.Spawn(self.transform, new Vector3(5.21f, -0.58f, +0.00101f));
+                }
+                dashEffect.transform.localScale = new Vector3(1.9196f,1,1.9196f);
+                ReflectionHelper.SetField(self, "dashEffect", dashEffect);
+                self.shadowRechargePrefab.SetActive(true);
+                FSMUtility.LocateFSM(self.shadowRechargePrefab, "Recharge Effect").SendEvent("RESET");
+#pragma warning disable 612, 618
+                self.shadowdashParticlesPrefab.GetComponent<ParticleSystem>().enableEmission = true;
+#pragma warning restore 612, 618
+                self.shadowRingPrefab.Spawn(self.transform.position);
+                VibrationManager.PlayVibrationClipOneShot(self.shadowDashVibration, null, false, "");
+            }
+            else
+            {
+                if (self.dashingDown)
+                {
+                    self.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
+                    self.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                }
+                else
+                {
+                    self.dashBurst.transform.localPosition = new Vector3(4.11f, -0.55f, 0.001f);
+                    self.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+                }
+                self.dashBurst.transform.localScale = new Vector3(-1.5085f, 1f, 1.5085f);
+                self.dashBurst.SendEvent("PLAY");
+#pragma warning disable 612, 618
+                self.dashParticlesPrefab.GetComponent<ParticleSystem>().enableEmission = true;
+#pragma warning restore 612, 618
+                VibrationManager.PlayVibrationClipOneShot(self.dashVibration, null, false, "");
+            }
+            if (self.cState.onGround && !self.cState.shadowDashing)
+            {
+                var self_dashEffect = self.backDashPrefab.Spawn(self.transform.position);
+                self_dashEffect.transform.localScale = new Vector3(self.transform.localScale.x * -1f, self.transform.localScale.y, self.transform.localScale.z);
+                ReflectionHelper.SetField(self, "dashEffect", self_dashEffect);
             }
         }
         private Vector2 ModHooks_DashVectorHook(Vector2 arg)
         {
             var h = HeroController.instance;
+            if (dashingDown && (dashingLeft || dashingRight) && h.cState.onGround)
+            {
+                h.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
+                ReflectionHelper.GetField<HeroController,GameObject>(h,"dashEffect").transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+            }
             var v = h.DASH_SPEED;
             var vX = (h.cState.facingRight ? 1 : -1) * v;
             if (dashingUp || dashingDown)
@@ -157,22 +202,21 @@ namespace Celeste
         }
         private bool HeroController_CanJump(On.HeroController.orig_CanJump orig, HeroController self)
         {
-            var this_ = self;
-            if (this_.hero_state == ActorStates.no_input || this_.hero_state == ActorStates.hard_landing || this_.hero_state == ActorStates.dash_landing || this_.cState.wallSliding || this_.cState.backDashing || this_.cState.jumping || this_.cState.bouncing || this_.cState.shroomBouncing)
+            if (self.hero_state == ActorStates.no_input || self.hero_state == ActorStates.hard_landing || self.hero_state == ActorStates.dash_landing || self.cState.wallSliding || self.cState.backDashing || self.cState.jumping || self.cState.bouncing || self.cState.shroomBouncing)
             {
                 return false;
             }
-            if (this_.cState.dashing && !dashingLeft && !dashingRight)
+            if (self.cState.dashing && !dashingLeft && !dashingRight)
             {
                 return false;
             }
-            if (this_.cState.onGround)
+            if (self.cState.onGround)
             {
                 return true;
             }
-            if (ReflectionHelper.GetField<HeroController, int>(this_, "ledgeBufferSteps") > 0 && !this_.cState.dead && !this_.cState.hazardDeath && !this_.controlReqlinquished && ReflectionHelper.GetField<HeroController, int>(this_, "headBumpSteps") <= 0 && !this_.CheckNearRoof())
+            if (ReflectionHelper.GetField<HeroController, int>(self, "ledgeBufferSteps") > 0 && !self.cState.dead && !self.cState.hazardDeath && !self.controlReqlinquished && ReflectionHelper.GetField<HeroController, int>(self, "headBumpSteps") <= 0 && !self.CheckNearRoof())
             {
-                ReflectionHelper.SetField(this_, "ledgeBufferSteps", 0);
+                ReflectionHelper.SetField(self, "ledgeBufferSteps", 0);
                 return true;
             }
             return false;
@@ -181,8 +225,9 @@ namespace Celeste
         {
             if (self.cState.dashing)
             {
-                ReflectionHelper.CallMethod(self, "FinishedDashing");
                 self.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
+                ReflectionHelper.GetField<HeroController, GameObject>(self, "dashEffect").transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+                ReflectionHelper.CallMethod(self, "FinishedDashing");
                 var d = (self.cState.facingRight ? 1 : -1);
                 if (Input.instance.leftPressed())
                 {

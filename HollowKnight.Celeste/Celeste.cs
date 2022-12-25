@@ -9,6 +9,7 @@ namespace Celeste
     public class Settings
     {
         public bool on = true;
+        public bool shadeCloak = false;
     }
     public class Celeste : Mod, IMenuMod, IGlobalSettings<Settings>
     {
@@ -30,7 +31,7 @@ namespace Celeste
             List<(string, string)> p = new List<(string, string)>();
             foreach (var module in modules)
             {
-                foreach(var name in module.GetPreloadNames())
+                foreach (var name in module.GetPreloadNames())
                 {
                     p.Add(name);
                 }
@@ -58,18 +59,33 @@ namespace Celeste
             menus.Add(
                 new()
                 {
+                    Name = "Enabled",
                     Values = new string[]
                     {
-                    Language.Language.Get("MOH_ON", "MainMenu"),
-                    Language.Language.Get("MOH_OFF", "MainMenu"),
+                        Language.Language.Get("MOH_ON", "MainMenu"),
+                        Language.Language.Get("MOH_OFF", "MainMenu")
                     },
-                    Saver = i => {
+                    Saver = i =>
+                    {
                         settings_.on = i == 0;
                         SetActive(settings_.on);
                     },
                     Loader = () => settings_.on ? 0 : 1
                 }
-            ); ;
+            );
+            menus.Add(
+                new()
+                {
+                    Name = "Shade Cloak",
+                    Values = new string[]
+                    {
+                        Language.Language.Get("MOH_ON", "MainMenu"),
+                        Language.Language.Get("MOH_OFF", "MainMenu")
+                    },
+                    Saver = i => settings_.shadeCloak = i == 0,
+                    Loader = () => settings_.shadeCloak ? 0 : 1
+                }
+            );
             return menus;
         }
         public void OnLoadGlobal(Settings settings) => settings_ = settings;
