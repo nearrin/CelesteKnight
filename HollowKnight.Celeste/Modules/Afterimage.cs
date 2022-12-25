@@ -2,11 +2,11 @@ namespace Celeste
 {
     public class Afterimage : Module
     {
-        public class ImageAnimation : MonoBehaviour
+        public class Animation : MonoBehaviour
         {
-            float time;
+            private float time;
+            public Generator generator;
             public tk2dSpriteAnimationClip clip;
-            public ImagePool pool;
             void Update()
             {
                 time += Time.deltaTime;
@@ -14,14 +14,15 @@ namespace Celeste
                 {
                     time = 0;
                     gameObject.SetActive(false);
-                    pool.inactive.Add(gameObject);
+                    generator.pool.inactive.Add(gameObject);
                 }
                 var newA = gameObject.GetAddComponent<tk2dSpriteAnimator>();
                 newA.Play(clip);
-                newA.Sprite.color = new Color(1, 0.5f, 1, 0.5f * (1 - time / 0.5f));
+                var c = generator.color;
+                newA.Sprite.color = new Color(c.r, c.g, c.b, c.a * (1 - time / 0.5f));
             }
         }
-        public class ImagePool
+        public class Pool
         {
             public GameObject template;
             public List<GameObject> inactive = new List<GameObject>();
@@ -44,10 +45,11 @@ namespace Celeste
                 return newG;
             }
         }
-        public class ImageGenerator : MonoBehaviour
+        public class Generator : MonoBehaviour
         {
-            float time;
-            public ImagePool pool = new();
+            private float time;
+            public Pool pool = new();
+            public Color color = new Color(0.28f, 0.72f, 0.84f, 0.5f);
             void Update()
             {
                 time += Time.deltaTime;
@@ -67,9 +69,9 @@ namespace Celeste
                     newC.frames = new tk2dSpriteAnimationFrame[1];
                     newC.frames[0] = originalC.frames[originalA.CurrentFrame];
                     newC.wrapMode = tk2dSpriteAnimationClip.WrapMode.Once;
-                    var i = newG.GetAddComponent<ImageAnimation>();
+                    var i = newG.GetAddComponent<Animation>();
+                    i.generator = this;
                     i.clip = newC;
-                    i.pool = pool;
                 }
             }
         }
@@ -115,12 +117,12 @@ namespace Celeste
             else
             {
                 ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
-                HeroController.instance?.gameObject.RemoveComponent<ImageGenerator>();
+                HeroController.instance?.gameObject.RemoveComponent<Generator>();
             }
         }
         private void ModHooks_HeroUpdateHook()
         {
-            HeroController.instance.gameObject.GetAddComponent<ImageGenerator>().pool.template = template;
+            HeroController.instance.gameObject.GetAddComponent<Generator>().pool.template = template;
         }
     }
 }
