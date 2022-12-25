@@ -7,6 +7,7 @@ namespace Celeste
         public bool dashingDown;
         public bool dashingLeft;
         public bool dashingRight;
+        private Vector2 upDashMomentum = new Vector2(0, 4);
         private Vector2 superMomentum = new Vector2(16, 0);
         private Vector2 hyperMomentum = new Vector2(32, -2);
         public Dash()
@@ -139,6 +140,10 @@ namespace Celeste
         {
             RotateSprite(0);
             orig(self);
+            if (dashingUp && !dashingLeft && !dashingRight)
+            {
+                Momentum.instance.momentum = upDashMomentum;
+            }
         }
         private bool HeroController_CanJump(On.HeroController.orig_CanJump orig, HeroController self)
         {

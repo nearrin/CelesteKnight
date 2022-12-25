@@ -61,15 +61,15 @@ namespace Celeste
                     var newA = newG.GetComponent<tk2dSpriteAnimator>();
                     newA.SetSprite(originalA.Sprite.Collection, originalA.Sprite.spriteId);
                     newA.Library = originalA.Library;
-                    var originalClip = originalA.CurrentClip;
-                    var newClip = new tk2dSpriteAnimationClip();
-                    newClip.CopyFrom(originalClip);
-                    newClip.frames = new tk2dSpriteAnimationFrame[1];
-                    newClip.frames[0] = originalClip.frames[originalA.CurrentFrame];
-                    newClip.wrapMode = tk2dSpriteAnimationClip.WrapMode.Once;
-                    var imageAnimation = newG.GetAddComponent<ImageAnimation>();
-                    imageAnimation.clip = newClip;
-                    imageAnimation.pool = pool;
+                    var originalC = originalA.CurrentClip;
+                    var newC = new tk2dSpriteAnimationClip();
+                    newC.CopyFrom(originalC);
+                    newC.frames = new tk2dSpriteAnimationFrame[1];
+                    newC.frames[0] = originalC.frames[originalA.CurrentFrame];
+                    newC.wrapMode = tk2dSpriteAnimationClip.WrapMode.Once;
+                    var i = newG.GetAddComponent<ImageAnimation>();
+                    i.clip = newC;
+                    i.pool = pool;
                 }
             }
         }
