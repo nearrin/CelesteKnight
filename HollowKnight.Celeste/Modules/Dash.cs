@@ -103,7 +103,7 @@ namespace Celeste
                 {
                     dashEffect = self.shadowdashBurstPrefab.Spawn(self.transform, new Vector3(5.21f, -0.58f, +0.00101f));
                 }
-                dashEffect.transform.localScale = new Vector3(1.9196f,1,1.9196f);
+                dashEffect.transform.localScale = new Vector3(1.9196f, 1, 1.9196f);
                 ReflectionHelper.SetField(self, "dashEffect", dashEffect);
                 self.shadowRechargePrefab.SetActive(true);
                 FSMUtility.LocateFSM(self.shadowRechargePrefab, "Recharge Effect").SendEvent("RESET");
@@ -145,10 +145,11 @@ namespace Celeste
             if (dashingDown && (dashingLeft || dashingRight) && h.cState.onGround)
             {
                 h.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
-                ReflectionHelper.GetField<HeroController,GameObject>(h,"dashEffect").transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+                ReflectionHelper.GetField<HeroController, GameObject>(h, "dashEffect").transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
             }
             var v = h.DASH_SPEED;
             var vX = (h.cState.facingRight ? 1 : -1) * v;
+            var c = ReflectionHelper.GetField<HeroController, Collider2D>(h, "col2d");
             if (dashingUp || dashingDown)
             {
                 var vY = (dashingUp ? 1 : -1) * v;
@@ -164,20 +165,39 @@ namespace Celeste
             }
             else
             {
-                var vY = 0f;
-                if (!h.cState.facingRight && h.CheckForBump(CollisionSide.left) || h.cState.facingRight && h.CheckForBump(CollisionSide.right))
+                var x = h.cState.facingRight ? c.bounds.max.x : c.bounds.min.x;
+                var t = new Vector2(x, c.bounds.min.y + 0.75f);
+                var b = new Vector2(x, c.bounds.min.y);
+                var d = h.cState.facingRight ? Vector2.right : Vector2.left;
+                var rT = Physics2D.Raycast(t, d, 0.05f, 256);
+                var rB = Physics2D.Raycast(b, d, 0.05f, 256);
+                if (rT.collider == null && rB.collider != null)
                 {
-                    vY = (!h.cState.onGround) ? 5f : 4f;
+                    for (int i = 0; i < 32; ++i)
+                    {
+                        var m = new Vector2(x, (t.y + b.y) / 2);
+                        var rM = Physics2D.Raycast(m, d, 0.05f, 256);
+                        if (rM.collider == null)
+                        {
+                            t = m;
+                        }
+                        else
+                        {
+                            b = m;
+                        }
+                    }
+                    var p = h.transform.position;
+                    h.transform.position = new Vector3(p.x, p.y + t.y - c.bounds.min.y, p.z);
                 }
-                return new Vector2(vX, vY);
+                return new Vector2(vX, 0);
             }
         }
         public void RotateSprite(float a)
         {
             var h = HeroController.instance;
-            var c = h.gameObject.GetComponent<BoxCollider2D>().bounds.center;
+            var c = h.GetComponent<BoxCollider2D>().bounds.center;
             h.transform.localRotation = Quaternion.Euler(new Vector3(0, 0, a));
-            var newC = h.gameObject.GetComponent<BoxCollider2D>().bounds.center;
+            var newC = h.GetComponent<BoxCollider2D>().bounds.center;
             var p = h.transform.localPosition;
             var newP = p + c - newC;
             h.transform.localPosition = newP;
@@ -218,6 +238,18 @@ namespace Celeste
             {
                 ReflectionHelper.SetField(self, "ledgeBufferSteps", 0);
                 return true;
+            }
+            if (self.cState.dashing)
+            {
+                var c = ReflectionHelper.GetField<HeroController, Collider2D>(self, "col2d");
+                var l = new Vector2(c.bounds.min.x, c.bounds.min.y);
+                var r = new Vector2(c.bounds.max.x, c.bounds.min.y);
+                var rL = Physics2D.Raycast(l, Vector2.down, 0.25f, 256);
+                var rR = Physics2D.Raycast(r, Vector2.down, 0.25f, 256);
+                if (rL.collider != null || rR.collider != null)
+                {
+                    return true;
+                }
             }
             return false;
         }
