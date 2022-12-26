@@ -2,31 +2,24 @@ namespace CelesteKnight
 {
     public class Input : Module
     {
-        public static Input instance;
-        private bool upPressedLastFrame = false;
-        private bool downPressedLastFrame = false;
-        private bool upPressedMoreRecently = false;
-        private bool leftPressedLastFrame = false;
-        private bool rightPressedLastFrame = false;
-        private bool leftPressedMoreRecently = false;
-        public Input()
-        {
-            instance = this;
-        }
+        private static bool upPressedLastFrame = false;
+        private static bool downPressedLastFrame = false;
+        private static bool upPressedMoreRecently = false;
+        private static bool leftPressedLastFrame = false;
+        private static bool rightPressedLastFrame = false;
+        private static bool leftPressedMoreRecently = false;
         public override void SetActive(bool active)
         {
             if (active)
             {
-                On.HeroController.Update += HeroController_Update;
                 On.HeroController.FilterInput += HeroController_FilterInput1;
             }
             else
             {
-                On.HeroController.Update -= HeroController_Update;
                 On.HeroController.FilterInput -= HeroController_FilterInput1;
             }
         }
-        private void RefreshInput()
+        private static void RefreshInput()
         {
             var inputActions = InputHandler.Instance.inputActions;
             if (inputActions.up.IsPressed && !upPressedLastFrame)
@@ -49,11 +42,6 @@ namespace CelesteKnight
                 leftPressedMoreRecently = false;
             }
             rightPressedLastFrame = inputActions.right.IsPressed;
-        }
-        private void HeroController_Update(On.HeroController.orig_Update orig, HeroController self)
-        {
-            RefreshInput();
-            orig(self);
         }
         private void HeroController_FilterInput1(On.HeroController.orig_FilterInput orig, HeroController self)
         {
@@ -113,7 +101,7 @@ namespace CelesteKnight
                 this_.vertical_input = 0f;
             }
         }
-        public bool upPressed()
+        public static bool upPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;
@@ -126,7 +114,7 @@ namespace CelesteKnight
                 return upPressedMoreRecently;
             }
         }
-        public bool downPressed()
+        public static bool downPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;
@@ -139,7 +127,7 @@ namespace CelesteKnight
                 return !upPressedMoreRecently;
             }
         }
-        public bool leftPressed()
+        public static bool leftPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;
@@ -152,7 +140,7 @@ namespace CelesteKnight
                 return leftPressedMoreRecently;
             }
         }
-        public bool rightPressed()
+        public static bool rightPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;
@@ -164,6 +152,10 @@ namespace CelesteKnight
             {
                 return !leftPressedMoreRecently;
             }
+        }
+        public static void Update()
+        {
+            RefreshInput();
         }
     }
 }
