@@ -98,7 +98,7 @@ namespace Celeste
                 time += Time.deltaTime;
             }
         }
-        GameObject prefab;
+        private static GameObject prefab;
         public override List<(string, string)> GetPreloadNames()
         {
             return new List<(string, string)>
@@ -115,15 +115,13 @@ namespace Celeste
         {
             if (active)
             {
-                ModHooks.HeroUpdateHook += ModHooks_HeroUpdateHook;
             }
             else
             {
-                ModHooks.HeroUpdateHook -= ModHooks_HeroUpdateHook;
                 HeroController.instance?.gameObject.RemoveComponent<Generator>();
             }
         }
-        private void ModHooks_HeroUpdateHook()
+        public static void Update()
         {
             HeroController.instance.gameObject.GetAddComponent<Generator>().pool.prefab = prefab;
         }

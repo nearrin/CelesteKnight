@@ -443,6 +443,7 @@ namespace Celeste
             {
                 h.parryInvulnTimer -= Time.deltaTime;
             }
+            Afterimage.Update();
         }
         private void HeroController_FixedUpdate(On.HeroController.orig_FixedUpdate orig, HeroController self)
         {
