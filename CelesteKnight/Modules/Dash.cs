@@ -9,12 +9,9 @@ namespace CelesteKnight
         public bool dashingRight;
         private Vector2 upDashMomentum = new Vector2(0, 4);
         private Vector2 superMomentum = new Vector2(16, 0);
-        private float superEffectTime = 0.5f;
-        private Vector2 hyperMomentum = new Vector2(32, -2);
-        private float hyperEffectTime = 0.5f;
+        private Vector2 hyperMomentum = new Vector2(28, -1.75f);
         private bool wallbouncingLeft;
         private Vector2 wallbounceMomentum = new Vector2(0, 2);
-        private float wallbounceEffectTime = 0.5f;
         public static bool lastActionJump;
         public Dash()
         {
@@ -398,12 +395,12 @@ namespace CelesteKnight
                 if (dashingDown)
                 {
                     Momentum.momentum += new Vector2(d * hyperMomentum.x, hyperMomentum.y);
-                    Momentum.effectMaxTime = hyperEffectTime;
+                    Momentum.StartEffect();
                 }
                 else
                 {
                     Momentum.momentum += new Vector2(d * superMomentum.x, superMomentum.y);
-                    Momentum.effectMaxTime = superEffectTime;
+                    Momentum.StartEffect();
                 }
             }
             lastActionJump = true;
@@ -424,11 +421,49 @@ namespace CelesteKnight
                 {
                     h.FlipSprite();
                 }
+                if (wallbouncingLeft)
+                {
+                    h.wallJumpedR = true;
+                    h.wallJumpedL = false;
+                }
+                else
+                {
+                    h.wallJumpedR = false;
+                    h.wallJumpedL = true;
+                }
                 Momentum.momentum += wallbounceMomentum;
-                Momentum.effectMaxTime = wallbounceEffectTime;
+                Momentum.StartEffect();
             }
+            h.wallPuffPrefab.SetActive(true);
+            h.audioCtrl.PlaySound(HeroSounds.WALLJUMP);
+            VibrationManager.PlayVibrationClipOneShot(h.wallJumpVibration, null, false, "");
+            if (h.touchingWallL)
+            {
+                h.FaceRight();
+                h.wallJumpedR = true;
+                h.wallJumpedL = false;
+            }
+            else if (h.touchingWallR)
+            {
+                h.FaceLeft();
+                h.wallJumpedR = false;
+                h.wallJumpedL = true;
+            }
+            h.CancelWallsliding();
+            h.cState.touchingWall = false;
+            h.touchingWallL = false;
+            h.touchingWallR = false;
+            h.airDashed = false;
+            h.doubleJumped = false;
+            h.currentWalljumpSpeed = h.WJ_KICKOFF_SPEED;
+            h.walljumpSpeedDecel = (h.WJ_KICKOFF_SPEED - h.RUN_SPEED) / (float)h.WJLOCK_STEPS_LONG;
+            h.dashBurst.SendEvent("CANCEL");
+            h.cState.jumping = true;
+            h.wallLockSteps = 0;
+            h.wallLocked = true;
+            h.jumpQueueSteps = 0;
+            h.jumped_steps = 0;
             lastActionJump = true;
-            orig(self);
         }
         private bool HeroController_CanDoubleJump(On.HeroController.orig_CanDoubleJump orig, HeroController self)
         {
