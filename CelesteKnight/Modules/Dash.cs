@@ -1,4 +1,4 @@
-namespace Celeste
+namespace CelesteKnight
 {
     public class Dash : Module
     {
@@ -115,7 +115,7 @@ namespace Celeste
             }
             h.dashingDown = !dashingLeft && !dashingRight;
             h.dashCooldownTimer = 0.2f;
-            if (Celeste.instance.settings_.shadeCloak && h.playerData.GetBool("hasShadowDash") && h.shadowDashTimer <= 0f)
+            if (CelesteKnight.instance.settings_.shadeCloak && h.playerData.GetBool("hasShadowDash") && h.shadowDashTimer <= 0f)
             {
                 h.cState.shadowDashing = true;
                 h.shadowDashTimer = h.SHADOW_DASH_COOLDOWN;
@@ -432,7 +432,7 @@ namespace Celeste
         }
         private bool HeroController_CanDoubleJump(On.HeroController.orig_CanDoubleJump orig, HeroController self)
         {
-            if (!Celeste.instance.settings_.doubleJump)
+            if (!CelesteKnight.instance.settings_.doubleJump)
             {
                 return false;
             }

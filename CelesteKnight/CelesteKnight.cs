@@ -5,7 +5,7 @@ global using HutongGames.PlayMaker.Actions;
 global using Modding;
 global using Satchel;
 global using UnityEngine;
-namespace Celeste
+namespace CelesteKnight
 {
     public class Settings
     {
@@ -13,13 +13,13 @@ namespace Celeste
         public bool doubleJump = false;
         public bool shadeCloak = false;
     }
-    public class Celeste : Mod, IMenuMod, IGlobalSettings<Settings>
+    public class CelesteKnight : Mod, IMenuMod, IGlobalSettings<Settings>
     {
-        public static Celeste instance;
+        public static CelesteKnight instance;
         public bool ToggleButtonInsideMenu => true;
         public Settings settings_ = new Settings();
         private List<Module> modules = new List<Module>();
-        public Celeste() : base("Celeste")
+        public CelesteKnight() : base("Celeste")
         {
             instance = this;
             modules.Add(new Input());

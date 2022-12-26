@@ -1,4 +1,4 @@
-namespace Celeste
+namespace CelesteKnight
 {
     public class Input : Module
     {

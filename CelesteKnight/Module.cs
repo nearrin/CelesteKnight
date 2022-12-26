@@ -1,10 +1,10 @@
-﻿namespace Celeste
+﻿namespace CelesteKnight
 {
     public class Module
     {
         protected static void Log(string message)
         {
-            Celeste.instance.Log(DateTime.Now.ToLongTimeString() + " : " + message);
+            CelesteKnight.instance.Log(DateTime.Now.ToLongTimeString() + " : " + message);
         }
         public virtual List<(string, string)> GetPreloadNames()
         {
