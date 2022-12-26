@@ -6,18 +6,45 @@ namespace Celeste
         {
             if (active)
             {
+                On.HeroController.JumpReleased += HeroController_JumpReleased;
                 On.HeroController.LookForInput += HeroController_LookForInput;
                 On.HeroController.Update += HeroController_Update;
                 On.HeroController.FixedUpdate += HeroController_FixedUpdate;
             }
             else
             {
+                On.HeroController.JumpReleased -= HeroController_JumpReleased;
                 On.HeroController.LookForInput -= HeroController_LookForInput;
                 On.HeroController.Update -= HeroController_Update;
                 On.HeroController.FixedUpdate -= HeroController_FixedUpdate;
             }
         }
-        [Obsolete]
+        private void HeroController_JumpReleased(On.HeroController.orig_JumpReleased orig, HeroController self)
+        {
+            var h = self.Reflect();
+            if (h.rb2d.velocity.y > 0f && h.jumped_steps >= h.JUMP_STEPS_MIN && !h.inAcid && !h.cState.shroomBouncing)
+            {
+                if (h.jumpReleaseQueueingEnabled)
+                {
+                    if (h.jumpReleaseQueuing && h.jumpReleaseQueueSteps <= 0)
+                    {
+                        h.rb2d.velocity = new Vector2(h.rb2d.velocity.x, 0f);
+                        h.CancelJump();
+                    }
+                }
+                else
+                {
+                    h.rb2d.velocity = new Vector2(h.rb2d.velocity.x, 0f);
+                    h.CancelJump();
+                }
+            }
+            h.jumpQueuing = false;
+            h.doubleJumpQueuing = false;
+            if (h.cState.swimming)
+            {
+                h.cState.swimming = false;
+            }
+        }
         private void HeroController_LookForInput(On.HeroController.orig_LookForInput orig, HeroController self)
         {
             var h = self.Reflect();
@@ -35,7 +62,9 @@ namespace Celeste
                         h.wallSlideVibrationPlayer.Play();
                         h.cState.wallSliding = true;
                         h.cState.willHardLand = false;
+#pragma warning disable 612,618
                         h.wallslideDustPrefab.enableEmission = true;
+#pragma warning restore 612,618
                         h.wallSlidingL = true;
                         h.wallSlidingR = false;
                         h.FaceLeft();
@@ -48,7 +77,9 @@ namespace Celeste
                         h.wallSlideVibrationPlayer.Play();
                         h.cState.wallSliding = true;
                         h.cState.willHardLand = false;
+#pragma warning disable 612,618
                         h.wallslideDustPrefab.enableEmission = true;
+#pragma warning restore 612,618
                         h.wallSlidingL = false;
                         h.wallSlidingR = true;
                         h.FaceRight();
@@ -73,7 +104,7 @@ namespace Celeste
                     h.jumpReleaseQueueSteps = h.JUMP_RELEASE_QUEUE_STEPS;
                     h.jumpReleaseQueuing = true;
                 }
-                if (!h.inputHandler.inputActions.jump.IsPressed)
+                if (!h.inputHandler.inputActions.jump.IsPressed || !Dash.lastActionJump)
                 {
                     h.JumpReleased();
                 }

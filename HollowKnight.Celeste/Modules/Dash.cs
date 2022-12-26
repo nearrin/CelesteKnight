@@ -8,9 +8,10 @@ namespace Celeste
         public bool dashingLeft;
         public bool dashingRight;
         private Vector2 upDashMomentum = new Vector2(0, 4);
-        private Vector2 wallbounceMomentum = new Vector2(0, 20);
         private Vector2 superMomentum = new Vector2(16, 0);
         private Vector2 hyperMomentum = new Vector2(32, -2);
+        private Vector2 wallbounceMomentum = new Vector2(0, 20);
+        public static bool lastActionJump;
         public Dash()
         {
             instance = this;
@@ -25,8 +26,10 @@ namespace Celeste
                 On.HeroController.FinishedDashing += HeroController_FinishedDashing;
                 On.HeroController.CanJump += HeroController_CanJump;
                 On.HeroController.HeroJump += HeroController_HeroJump;
+                On.HeroController.DoWallJump += HeroController_DoWallJump;
                 On.HeroController.CanDoubleJump += HeroController_CanDoubleJump;
                 On.HeroController.ShouldHardLand += HeroController_ShouldHardLand;
+                On.HeroController.RegainControl += HeroController_RegainControl;
             }
             else
             {
@@ -36,6 +39,7 @@ namespace Celeste
                 On.HeroController.HeroJump -= HeroController_HeroJump;
                 On.HeroController.CanDoubleJump -= HeroController_CanDoubleJump;
                 On.HeroController.ShouldHardLand -= HeroController_ShouldHardLand;
+                On.HeroController.RegainControl -= HeroController_RegainControl;
             }
         }
         private static GameObject GetDashEffectHolder()
@@ -61,115 +65,115 @@ namespace Celeste
         }
         private void HeroController_HeroDash(On.HeroController.orig_HeroDash orig, HeroController self)
         {
-            var self_audioCtrl = ReflectionHelper.GetField<HeroController, HeroAudioController>(self, "audioCtrl");
-            var self_autoSource = ReflectionHelper.GetField<HeroController, AudioSource>(self, "audioSource");
-            if (!self.cState.onGround && !self.inAcid)
+            var h = self.Reflect();
+            if (!h.cState.onGround && !h.inAcid)
             {
-                ReflectionHelper.SetField(self, "airDashed", true);
+                h.airDashed = true;
             }
-            ReflectionHelper.CallMethod(self, "ResetAttacksDash");
-            ReflectionHelper.CallMethod(self, "CancelBounce");
-            self_audioCtrl.StopSound(HeroSounds.FOOTSTEPS_RUN);
-            self_audioCtrl.StopSound(HeroSounds.FOOTSTEPS_WALK);
-            self_audioCtrl.PlaySound(HeroSounds.DASH);
-            ReflectionHelper.CallMethod(self, "ResetLook");
-            self.cState.recoiling = false;
-            if (self.cState.wallSliding)
+            h.ResetAttacksDash();
+            h.CancelBounce();
+            h.audioCtrl.StopSound(HeroSounds.FOOTSTEPS_RUN);
+            h.audioCtrl.StopSound(HeroSounds.FOOTSTEPS_WALK);
+            h.audioCtrl.PlaySound(HeroSounds.DASH);
+            h.ResetLook();
+            h.cState.recoiling = false;
+            if (h.cState.wallSliding)
             {
-                self.FlipSprite();
+                h.FlipSprite();
             }
             else if (Input.instance.rightPressed())
             {
-                self.FaceRight();
+                h.FaceRight();
             }
             else if (Input.instance.leftPressed())
             {
-                self.FaceLeft();
+                h.FaceLeft();
             }
-            self.cState.dashing = true;
-            ReflectionHelper.SetField(self, "dashQueueSteps", 0);
+            h.cState.dashing = true;
+            h.dashQueueSteps = 0;
             dashingUp = Input.instance.upPressed();
             dashingDown = Input.instance.downPressed();
             dashingLeft = Input.instance.leftPressed();
             dashingRight = Input.instance.rightPressed();
             if (!dashingUp && !dashingDown && !dashingLeft && !dashingRight)
             {
-                dashingLeft = !self.cState.facingRight;
-                dashingRight = self.cState.facingRight;
+                dashingLeft = !h.cState.facingRight;
+                dashingRight = h.cState.facingRight;
             }
-            self.dashingDown = !dashingLeft && !dashingRight;
-            ReflectionHelper.SetField(self, "dashCooldownTimer", 0.2f);
-            if (Celeste.instance.settings_.shadeCloak && self.playerData.GetBool("hasShadowDash") && ReflectionHelper.GetField<HeroController, float>(self, "shadowDashTimer") <= 0f)
+            h.dashingDown = !dashingLeft && !dashingRight;
+            h.dashCooldownTimer = 0.2f;
+            if (Celeste.instance.settings_.shadeCloak && h.playerData.GetBool("hasShadowDash") && h.shadowDashTimer <= 0f)
             {
-                self.cState.shadowDashing = true;
-                ReflectionHelper.SetField(self, "shadowDashTimer", self.SHADOW_DASH_COOLDOWN);
-                if (self.playerData.GetBool("equippedCharm_16"))
+                h.cState.shadowDashing = true;
+                h.shadowDashTimer = h.SHADOW_DASH_COOLDOWN;
+                if (h.playerData.GetBool("equippedCharm_16"))
                 {
-                    self_autoSource.PlayOneShot(self.sharpShadowClip, 1f);
-                    self.sharpShadowPrefab.SetActive(true);
+                    h.audioSource.PlayOneShot(h.sharpShadowClip, 1f);
+                    h.sharpShadowPrefab.SetActive(true);
                 }
                 else
                 {
-                    self_autoSource.PlayOneShot(self.shadowDashClip, 1f);
+                    h.audioSource.PlayOneShot(h.shadowDashClip, 1f);
                 }
                 GameObject dashEffect;
-                if (self.dashingDown)
+                if (h.dashingDown)
                 {
-                    dashEffect = self.shadowdashDownBurstPrefab.Spawn(GetAddDashEffectHolder().transform, new Vector3(0, 3.5f, 0.00101f));
+                    dashEffect = h.shadowdashDownBurstPrefab.Spawn(GetAddDashEffectHolder().transform, new Vector3(0, 3.5f, 0.00101f));
                     dashEffect.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
                 }
                 else
                 {
-                    dashEffect = self.shadowdashBurstPrefab.Spawn(GetAddDashEffectHolder().transform, new Vector3(5.21f, -0.58f, +0.00101f));
+                    dashEffect = h.shadowdashBurstPrefab.Spawn(GetAddDashEffectHolder().transform, new Vector3(5.21f, -0.58f, +0.00101f));
                 }
                 dashEffect.transform.localScale = new Vector3(1.9196f, 1, 1.9196f);
-                ReflectionHelper.SetField(self, "dashEffect", dashEffect);
-                self.shadowRechargePrefab.SetActive(true);
-                FSMUtility.LocateFSM(self.shadowRechargePrefab, "Recharge Effect").SendEvent("RESET");
-                self.shadowRingPrefab.Spawn(self.transform.position);
-                VibrationManager.PlayVibrationClipOneShot(self.shadowDashVibration, null, false, "");
+                h.dashEffect = dashEffect;
+                h.shadowRechargePrefab.SetActive(true);
+                FSMUtility.LocateFSM(h.shadowRechargePrefab, "Recharge Effect").SendEvent("RESET");
+                h.shadowRingPrefab.Spawn(h.transform.position);
+                VibrationManager.PlayVibrationClipOneShot(h.shadowDashVibration, null, false, "");
             }
             else
             {
-                self.dashBurst.transform.parent = GetAddDashEffectHolder().transform;
-                if (self.dashingDown)
+                h.dashBurst.transform.parent = GetAddDashEffectHolder().transform;
+                if (h.dashingDown)
                 {
-                    self.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
-                    self.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
+                    h.dashBurst.transform.localPosition = new Vector3(-0.07f, 3.74f, 0.01f);
+                    h.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 90f);
                 }
                 else
                 {
-                    self.dashBurst.transform.localPosition = new Vector3(4.11f, -0.55f, 0.001f);
-                    self.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+                    h.dashBurst.transform.localPosition = new Vector3(4.11f, -0.55f, 0.001f);
+                    h.dashBurst.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
                 }
-                self.dashBurst.transform.localScale = new Vector3(-1.5085f, 1f, 1.5085f);
-                self.dashBurst.SendEvent("PLAY");
-                if (self.cState.onGround && (dashingLeft || dashingRight))
+                h.dashBurst.transform.localScale = new Vector3(-1.5085f, 1f, 1.5085f);
+                h.dashBurst.SendEvent("PLAY");
+                if (h.cState.onGround && (dashingLeft || dashingRight))
                 {
-                    var dashEffect = self.backDashPrefab.Spawn(self.transform.position);
-                    dashEffect.transform.localScale = new Vector3(self.transform.localScale.x * -1f, self.transform.localScale.y, self.transform.localScale.z);
+                    var dashEffect = h.backDashPrefab.Spawn(h.transform.position);
+                    dashEffect.transform.localScale = new Vector3(h.transform.localScale.x * -1f, h.transform.localScale.y, h.transform.localScale.z);
                 }
 #pragma warning disable 612, 618
-                self.dashParticlesPrefab.GetComponent<ParticleSystem>().enableEmission = true;
+                h.dashParticlesPrefab.GetComponent<ParticleSystem>().enableEmission = true;
 #pragma warning restore 612, 618
-                VibrationManager.PlayVibrationClipOneShot(self.dashVibration, null, false, "");
+                VibrationManager.PlayVibrationClipOneShot(h.dashVibration, null, false, "");
             }
+            h.jumped_steps = h.JUMP_STEPS_MIN;
+            lastActionJump = false;
         }
         private Vector2 ModHooks_DashVectorHook(Vector2 arg)
         {
-            var h = HeroController.instance;
+            var h = HeroController.instance.Reflect();
             if (dashingDown && (dashingLeft || dashingRight) && h.cState.onGround)
             {
                 h.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
-                var dashEffect = ReflectionHelper.GetField<HeroController, GameObject>(h, "dashEffect");
-                if (dashEffect != null)
+                if (h.dashEffect != null)
                 {
-                    dashEffect.transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+                    h.dashEffect.transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
                 }
             }
             var v = h.DASH_SPEED;
             var vX = (h.cState.facingRight ? 1 : -1) * v;
-            var c = ReflectionHelper.GetField<HeroController, Collider2D>(h, "col2d");
+            var bounds = h.col2d.bounds;
             if (dashingUp || dashingDown)
             {
                 var vY = (dashingUp ? 1 : -1) * v;
@@ -180,9 +184,9 @@ namespace Celeste
                 }
                 else
                 {
-                    var y = dashingUp ? c.bounds.max.y : c.bounds.min.y;
-                    var l = new Vector2(c.bounds.min.x, y);
-                    var r = new Vector2(c.bounds.max.x, y);
+                    var y = dashingUp ? bounds.max.y : bounds.min.y;
+                    var l = new Vector2(bounds.min.x, y);
+                    var r = new Vector2(bounds.max.x, y);
                     var d = dashingUp ? Vector2.up : Vector2.down;
                     var rL = Physics2D.Raycast(l, d, 0.05f, 256);
                     var rR = Physics2D.Raycast(r, d, 0.05f, 256);
@@ -208,11 +212,11 @@ namespace Celeste
                         var p = h.transform.position;
                         if (rL.collider == null)
                         {
-                            h.transform.position = new Vector3(p.x + l.x - c.bounds.max.x - 0.01f, p.y, p.z);
+                            h.transform.position = new Vector3(p.x + l.x - bounds.max.x - 0.01f, p.y, p.z);
                         }
                         else
                         {
-                            h.transform.position = new Vector3(p.x + r.x - c.bounds.min.x + 0.01f, p.y, p.z);
+                            h.transform.position = new Vector3(p.x + r.x - bounds.min.x + 0.01f, p.y, p.z);
                         }
                     }
                     return new Vector2(0, vY);
@@ -220,9 +224,9 @@ namespace Celeste
             }
             else
             {
-                var x = h.cState.facingRight ? c.bounds.max.x : c.bounds.min.x;
-                var t = new Vector2(x, c.bounds.min.y + 0.75f);
-                var b = new Vector2(x, c.bounds.min.y);
+                var x = h.cState.facingRight ? bounds.max.x : bounds.min.x;
+                var t = new Vector2(x, bounds.min.y + 0.75f);
+                var b = new Vector2(x, bounds.min.y);
                 var d = h.cState.facingRight ? Vector2.right : Vector2.left;
                 var rT = Physics2D.Raycast(t, d, 0.05f, 256);
                 var rB = Physics2D.Raycast(b, d, 0.05f, 256);
@@ -242,7 +246,7 @@ namespace Celeste
                         }
                     }
                     var p = h.transform.position;
-                    h.transform.position = new Vector3(p.x, p.y + t.y - c.bounds.min.y + 0.01f, p.z);
+                    h.transform.position = new Vector3(p.x, p.y + t.y - bounds.min.y + 0.01f, p.z);
                 }
                 return new Vector2(vX, 0);
             }
@@ -273,8 +277,8 @@ namespace Celeste
         }
         private void HeroController_CancelDash(On.HeroController.orig_CancelDash orig, HeroController self)
         {
-            AdjustSprite(0, 0);
             orig(self);
+            AdjustSprite(0, 0);
             if (dashingUp && !dashingLeft && !dashingRight)
             {
                 Momentum.momentum = upDashMomentum;
@@ -282,8 +286,8 @@ namespace Celeste
         }
         private void HeroController_FinishedDashing(On.HeroController.orig_FinishedDashing orig, HeroController self)
         {
-            AdjustSprite(0, 0);
             orig(self);
+            AdjustSprite(0, 0);
             if (dashingUp && !dashingLeft && !dashingRight)
             {
                 Momentum.momentum = upDashMomentum;
@@ -291,28 +295,29 @@ namespace Celeste
         }
         private bool HeroController_CanJump(On.HeroController.orig_CanJump orig, HeroController self)
         {
-            if (self.hero_state == ActorStates.no_input || self.hero_state == ActorStates.hard_landing || self.hero_state == ActorStates.dash_landing || self.cState.wallSliding || self.cState.backDashing || self.cState.jumping || self.cState.bouncing || self.cState.shroomBouncing)
+            var h = self.Reflect();
+            if (h.hero_state == ActorStates.no_input || h.hero_state == ActorStates.hard_landing || h.hero_state == ActorStates.dash_landing || h.cState.wallSliding || h.cState.backDashing || h.cState.jumping || h.cState.bouncing || h.cState.shroomBouncing)
             {
                 return false;
             }
-            if (self.cState.dashing && !dashingLeft && !dashingRight)
+            if (h.cState.dashing && !dashingLeft && !dashingRight)
             {
                 return false;
             }
-            if (self.cState.onGround)
+            if (h.cState.onGround)
             {
                 return true;
             }
-            if (ReflectionHelper.GetField<HeroController, int>(self, "ledgeBufferSteps") > 0 && !self.cState.dead && !self.cState.hazardDeath && !self.controlReqlinquished && ReflectionHelper.GetField<HeroController, int>(self, "headBumpSteps") <= 0 && !self.CheckNearRoof())
+            if (h.ledgeBufferSteps > 0 && !h.cState.dead && !h.cState.hazardDeath && !h.controlReqlinquished && h.headBumpSteps <= 0 && !h.CheckNearRoof())
             {
-                ReflectionHelper.SetField(self, "ledgeBufferSteps", 0);
+                h.ledgeBufferSteps = 0;
                 return true;
             }
-            if (self.cState.dashing)
+            if (h.cState.dashing)
             {
-                var c = ReflectionHelper.GetField<HeroController, Collider2D>(self, "col2d");
-                var l = new Vector2(c.bounds.min.x, c.bounds.min.y);
-                var r = new Vector2(c.bounds.max.x, c.bounds.min.y);
+                var b = h.col2d.bounds;
+                var l = new Vector2(b.min.x, b.min.y);
+                var r = new Vector2(b.max.x, b.min.y);
                 var rL = Physics2D.Raycast(l, Vector2.down, 0.25f, 256);
                 var rR = Physics2D.Raycast(r, Vector2.down, 0.25f, 256);
                 if (rL.collider != null || rR.collider != null)
@@ -324,16 +329,16 @@ namespace Celeste
         }
         private void HeroController_HeroJump(On.HeroController.orig_HeroJump orig, HeroController self)
         {
-            if (self.cState.dashing)
+            var h = self.Reflect();
+            if (h.cState.dashing)
             {
-                self.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
-                var dashEffect = ReflectionHelper.GetField<HeroController, GameObject>(self, "dashEffect");
-                if (dashEffect != null)
+                h.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
+                if (h.dashEffect != null)
                 {
-                    dashEffect.transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+                    h.dashEffect.transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
                 }
-                ReflectionHelper.CallMethod(self, "FinishedDashing");
-                var d = (self.cState.facingRight ? 1 : -1);
+                h.FinishedDashing();
+                var d = (h.cState.facingRight ? 1 : -1);
                 if (Input.instance.leftPressed())
                 {
                     d = -1;
@@ -345,6 +350,12 @@ namespace Celeste
                 var m = dashingDown ? hyperMomentum : superMomentum;
                 Momentum.momentum += new Vector2(d * m.x, m.y);
             }
+            lastActionJump = true;
+            orig(self);
+        }
+        private void HeroController_DoWallJump(On.HeroController.orig_DoWallJump orig, HeroController self)
+        {
+            lastActionJump = true;
             orig(self);
         }
         private bool HeroController_CanDoubleJump(On.HeroController.orig_CanDoubleJump orig, HeroController self)
@@ -358,6 +369,11 @@ namespace Celeste
         private bool HeroController_ShouldHardLand(On.HeroController.orig_ShouldHardLand orig, HeroController self, Collision2D collision)
         {
             return false;
+        }
+        private void HeroController_RegainControl(On.HeroController.orig_RegainControl orig, HeroController self)
+        {
+            orig(self);
+            lastActionJump = true;
         }
         public static void FixedUpdate()
         {
