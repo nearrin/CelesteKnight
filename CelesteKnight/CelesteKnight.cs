@@ -27,6 +27,7 @@ namespace CelesteKnight
             modules.Add(new Afterimage());
             modules.Add(new Momentum());
             modules.Add(new Update());
+            modules.Add(new Room());
         }
         public override string GetVersion() => "0.2.0.0";
         public override List<(string, string)> GetPreloadNames()

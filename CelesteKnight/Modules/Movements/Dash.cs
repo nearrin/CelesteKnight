@@ -295,6 +295,7 @@ namespace CelesteKnight
             AdjustSprite(0, 0);
             if (dashingUp && !dashingLeft && !dashingRight)
             {
+                self.Reflect().rb2d.velocity = Vector2.zero;
                 Momentum.momentum = upDashMomentum;
             }
         }
@@ -356,8 +357,8 @@ namespace CelesteKnight
                     var y = b.min.y + (b.max.y - b.min.y) * (i / 31f);
                     var l = new Vector2(b.min.x, y);
                     var r = new Vector2(b.max.x, y);
-                    var rL = Physics2D.Raycast(l, Vector2.left, 0.25f, 256);
-                    var rR = Physics2D.Raycast(r, Vector2.right, 0.25f, 256);
+                    var rL = Physics2D.Raycast(l, Vector2.left, 0.35f, 256);
+                    var rR = Physics2D.Raycast(r, Vector2.right, 0.35f, 256);
                     if (rL.collider != null)
                     {
                         wallbouncingLeft = true;
