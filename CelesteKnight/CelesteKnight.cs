@@ -4,6 +4,7 @@ global using HutongGames.PlayMaker;
 global using HutongGames.PlayMaker.Actions;
 global using Modding;
 global using Satchel;
+global using System.Reflection;
 global using UnityEngine;
 namespace CelesteKnight
 {

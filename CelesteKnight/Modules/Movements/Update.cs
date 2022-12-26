@@ -124,6 +124,8 @@ namespace CelesteKnight
         }
         private void HeroController_Update(On.HeroController.orig_Update orig, HeroController self)
         {
+            MethodInfo m = typeof(ModHooks).GetMethod("OnHeroUpdate", BindingFlags.NonPublic | BindingFlags.Static);
+            m.Invoke(null, new object[] { });
             var h = self.Reflect();
             if (Time.frameCount % 10 == 0)
             {
