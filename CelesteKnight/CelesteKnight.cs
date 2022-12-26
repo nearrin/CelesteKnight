@@ -19,7 +19,7 @@ namespace CelesteKnight
         public bool ToggleButtonInsideMenu => true;
         public Settings settings_ = new Settings();
         private List<Module> modules = new List<Module>();
-        public CelesteKnight() : base("Celeste")
+        public CelesteKnight() : base("CelesteKnight")
         {
             instance = this;
             modules.Add(new Input());
@@ -28,7 +28,7 @@ namespace CelesteKnight
             modules.Add(new Momentum());
             modules.Add(new Update());
         }
-        public override string GetVersion() => "1.0.0.0";
+        public override string GetVersion() => "0.2.0.0";
         public override List<(string, string)> GetPreloadNames()
         {
             List<(string, string)> p = new List<(string, string)>();
