@@ -10,7 +10,8 @@ namespace Celeste
         private Vector2 upDashMomentum = new Vector2(0, 4);
         private Vector2 superMomentum = new Vector2(16, 0);
         private Vector2 hyperMomentum = new Vector2(32, -2);
-        private Vector2 wallbounceMomentum = new Vector2(0, 20);
+        private bool wallbouncingLeft;
+        private Vector2 wallbounceMomentum = new Vector2(0, 2);
         public static bool lastActionJump;
         public Dash()
         {
@@ -20,11 +21,13 @@ namespace Celeste
         {
             if (active)
             {
+                On.HeroController.CanDash += HeroController_CanDash;
                 On.HeroController.HeroDash += HeroController_HeroDash;
                 ModHooks.DashVectorHook += ModHooks_DashVectorHook;
                 On.HeroController.CancelDash += HeroController_CancelDash;
                 On.HeroController.FinishedDashing += HeroController_FinishedDashing;
                 On.HeroController.CanJump += HeroController_CanJump;
+                On.HeroController.CanWallJump += HeroController_CanWallJump;
                 On.HeroController.HeroJump += HeroController_HeroJump;
                 On.HeroController.DoWallJump += HeroController_DoWallJump;
                 On.HeroController.CanDoubleJump += HeroController_CanDoubleJump;
@@ -33,9 +36,11 @@ namespace Celeste
             }
             else
             {
+                On.HeroController.CanDash -= HeroController_CanDash;
                 On.HeroController.HeroDash -= HeroController_HeroDash;
                 ModHooks.DashVectorHook -= ModHooks_DashVectorHook;
                 On.HeroController.CanJump -= HeroController_CanJump;
+                On.HeroController.CanWallJump -= HeroController_CanWallJump;
                 On.HeroController.HeroJump -= HeroController_HeroJump;
                 On.HeroController.CanDoubleJump -= HeroController_CanDoubleJump;
                 On.HeroController.ShouldHardLand -= HeroController_ShouldHardLand;
@@ -62,6 +67,11 @@ namespace Celeste
                 b.isTrigger = true;
             }
             return h.transform.Find("dashEffectHolder").gameObject;
+        }
+        private bool HeroController_CanDash(On.HeroController.orig_CanDash orig, HeroController self)
+        {
+            var h = self.Reflect();
+            return h.hero_state != ActorStates.no_input && h.hero_state != ActorStates.hard_landing && h.hero_state != ActorStates.dash_landing && h.dashCooldownTimer <= 0f && !h.cState.dashing && !h.cState.backDashing && (!h.cState.attacking || h.attack_time >= h.ATTACK_RECOVERY_TIME) && !h.cState.preventDash && (h.cState.onGround || !h.airDashed || h.cState.wallSliding) && !h.cState.hazardDeath;
         }
         private void HeroController_HeroDash(On.HeroController.orig_HeroDash orig, HeroController self)
         {
@@ -210,13 +220,18 @@ namespace Celeste
                             }
                         }
                         var p = h.transform.position;
+                        float delta;
                         if (rL.collider == null)
                         {
-                            h.transform.position = new Vector3(p.x + l.x - bounds.max.x - 0.01f, p.y, p.z);
+                            delta = l.x - bounds.max.x - 0.01f;
                         }
                         else
                         {
-                            h.transform.position = new Vector3(p.x + r.x - bounds.min.x + 0.01f, p.y, p.z);
+                            delta = r.x - bounds.min.x + 0.01f;
+                        }
+                        if (Mathf.Abs(delta) < 0.25)
+                        {
+                            h.transform.position = new Vector3(p.x + delta, p.y, p.z);
                         }
                     }
                     return new Vector2(0, vY);
@@ -327,6 +342,37 @@ namespace Celeste
             }
             return false;
         }
+        private bool HeroController_CanWallJump(On.HeroController.orig_CanWallJump orig, HeroController self)
+        {
+            var h = self.Reflect();
+            if (!h.cState.touchingNonSlider && (h.cState.wallSliding || (h.cState.touchingWall && !h.cState.onGround)))
+            {
+                return true;
+            }
+            if (dashingUp && !dashingLeft && !dashingRight)
+            {
+                var b = h.col2d.bounds;
+                for (int i = 0; i < 32; ++i)
+                {
+                    var y = b.min.y + (b.max.y - b.min.y) * (i / 31f);
+                    var l = new Vector2(b.min.x, y);
+                    var r = new Vector2(b.max.x, y);
+                    var rL = Physics2D.Raycast(l, Vector2.left, 0.25f, 256);
+                    var rR = Physics2D.Raycast(r, Vector2.right, 0.25f, 256);
+                    if (rL.collider != null)
+                    {
+                        wallbouncingLeft = true;
+                        return true;
+                    }
+                    if (rR.collider != null)
+                    {
+                        wallbouncingLeft = false;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
         private void HeroController_HeroJump(On.HeroController.orig_HeroJump orig, HeroController self)
         {
             var h = self.Reflect();
@@ -355,6 +401,21 @@ namespace Celeste
         }
         private void HeroController_DoWallJump(On.HeroController.orig_DoWallJump orig, HeroController self)
         {
+            var h = self.Reflect();
+            if (h.cState.dashing)
+            {
+                h.dashBurst.transform.localScale = new Vector3(-1.5085f, 0f, 1.5085f);
+                if (h.dashEffect != null)
+                {
+                    h.dashEffect.transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
+                }
+                h.FinishedDashing();
+                Momentum.momentum += wallbounceMomentum;
+                if (h.cState.facingRight != wallbouncingLeft)
+                {
+                    h.FlipSprite();
+                }
+            }
             lastActionJump = true;
             orig(self);
         }
