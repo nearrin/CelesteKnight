@@ -2,7 +2,7 @@
 {
     public class Module
     {
-        protected void Log(string message)
+        protected static void Log(string message)
         {
             Celeste.instance.Log(DateTime.Now.ToLongTimeString() + " : " + message);
         }

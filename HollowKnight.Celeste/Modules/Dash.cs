@@ -9,9 +9,12 @@ namespace Celeste
         public bool dashingRight;
         private Vector2 upDashMomentum = new Vector2(0, 4);
         private Vector2 superMomentum = new Vector2(16, 0);
+        private float superEffectTime = 0.5f;
         private Vector2 hyperMomentum = new Vector2(32, -2);
+        private float hyperEffectTime = 0.5f;
         private bool wallbouncingLeft;
         private Vector2 wallbounceMomentum = new Vector2(0, 2);
+        private float wallbounceEffectTime = 0.5f;
         public static bool lastActionJump;
         public Dash()
         {
@@ -139,7 +142,6 @@ namespace Celeste
                 h.dashEffect = dashEffect;
                 h.shadowRechargePrefab.SetActive(true);
                 FSMUtility.LocateFSM(h.shadowRechargePrefab, "Recharge Effect").SendEvent("RESET");
-                h.shadowRingPrefab.Spawn(h.transform.position);
                 VibrationManager.PlayVibrationClipOneShot(h.shadowDashVibration, null, false, "");
             }
             else
@@ -393,8 +395,16 @@ namespace Celeste
                 {
                     d = 1;
                 }
-                var m = dashingDown ? hyperMomentum : superMomentum;
-                Momentum.momentum += new Vector2(d * m.x, m.y);
+                if (dashingDown)
+                {
+                    Momentum.momentum += new Vector2(d * hyperMomentum.x, hyperMomentum.y);
+                    Momentum.effectMaxTime = hyperEffectTime;
+                }
+                else
+                {
+                    Momentum.momentum += new Vector2(d * superMomentum.x, superMomentum.y);
+                    Momentum.effectMaxTime = superEffectTime;
+                }
             }
             lastActionJump = true;
             orig(self);
@@ -410,11 +420,12 @@ namespace Celeste
                     h.dashEffect.transform.localScale = new Vector3(1.9196f, 0, 1.9196f);
                 }
                 h.FinishedDashing();
-                Momentum.momentum += wallbounceMomentum;
                 if (h.cState.facingRight != wallbouncingLeft)
                 {
                     h.FlipSprite();
                 }
+                Momentum.momentum += wallbounceMomentum;
+                Momentum.effectMaxTime = wallbounceEffectTime;
             }
             lastActionJump = true;
             orig(self);
