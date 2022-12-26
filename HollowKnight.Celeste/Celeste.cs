@@ -26,6 +26,7 @@ namespace Celeste
             modules.Add(new Dash());
             modules.Add(new Afterimage());
             modules.Add(new Momentum());
+            modules.Add(new Update());
         }
         public override string GetVersion() => "1.0.0.0";
         public override List<(string, string)> GetPreloadNames()

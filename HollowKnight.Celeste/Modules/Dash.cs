@@ -38,7 +38,7 @@ namespace Celeste
                 On.HeroController.ShouldHardLand -= HeroController_ShouldHardLand;
             }
         }
-        private GameObject GetDashEffectHolder()
+        private static GameObject GetDashEffectHolder()
         {
             var h = HeroController.instance;
             var d = h.transform.Find("dashEffectHolder");
@@ -247,7 +247,7 @@ namespace Celeste
                 return new Vector2(vX, 0);
             }
         }
-        public void AdjustSprite(float knight, float holder)
+        public static void AdjustSprite(float knight, float holder)
         {
             var rotate = (GameObject g, float a) =>
             {
@@ -277,7 +277,7 @@ namespace Celeste
             orig(self);
             if (dashingUp && !dashingLeft && !dashingRight)
             {
-                Momentum.instance.momentum = upDashMomentum;
+                Momentum.momentum = upDashMomentum;
             }
         }
         private void HeroController_FinishedDashing(On.HeroController.orig_FinishedDashing orig, HeroController self)
@@ -286,7 +286,7 @@ namespace Celeste
             orig(self);
             if (dashingUp && !dashingLeft && !dashingRight)
             {
-                Momentum.instance.momentum = upDashMomentum;
+                Momentum.momentum = upDashMomentum;
             }
         }
         private bool HeroController_CanJump(On.HeroController.orig_CanJump orig, HeroController self)
@@ -343,7 +343,7 @@ namespace Celeste
                     d = 1;
                 }
                 var m = dashingDown ? hyperMomentum : superMomentum;
-                Momentum.instance.momentum += new Vector2(d * m.x, m.y);
+                Momentum.momentum += new Vector2(d * m.x, m.y);
             }
             orig(self);
         }
@@ -358,6 +358,36 @@ namespace Celeste
         private bool HeroController_ShouldHardLand(On.HeroController.orig_ShouldHardLand orig, HeroController self, Collision2D collision)
         {
             return false;
+        }
+        public static void FixedUpdate()
+        {
+            var h = HeroController.instance.Reflect();
+            if (h.cState.dashing)
+            {
+                var v = h.rb2d.velocity;
+                if (h.cState.onGround && v.x != 0 & v.y < 0)
+                {
+                    v = new Vector2(v.x, 0);
+                }
+                var diagonal = (Dash.instance.dashingUp || Dash.instance.dashingDown) && (Dash.instance.dashingLeft || Dash.instance.dashingRight);
+                if (diagonal)
+                {
+                    float a;
+                    if (h.cState.facingRight)
+                    {
+                        a = -Mathf.Atan2(v.y, v.x);
+                    }
+                    else
+                    {
+                        a = Mathf.Atan2(v.y, v.x) + Mathf.PI;
+                    }
+                    AdjustSprite(0, a / Mathf.PI * 180);
+                }
+                else if (Dash.instance.dashingUp)
+                {
+                    AdjustSprite(180, 0);
+                }
+            }
         }
     }
 }
