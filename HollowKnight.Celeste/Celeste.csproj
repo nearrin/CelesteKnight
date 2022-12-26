@@ -15,6 +15,9 @@
 		<Reference Include="Assembly-CSharp">
 			<HintPath>$(ReferenceInstallation)/Assembly-CSharp.dll</HintPath>
 		</Reference>
+		<Reference Include="HKMirror">
+			<HintPath>$(ReferenceInstallation)/Mods/HKMirror/HKMirror.dll</HintPath>
+		</Reference>
 		<Reference Include="MMHOOK_Assembly-CSharp">
 			<HintPath>$(ReferenceInstallation)/MMHOOK_Assembly-CSharp.dll</HintPath>
 		</Reference>
