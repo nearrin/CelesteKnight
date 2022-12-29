@@ -101,7 +101,7 @@ namespace CelesteKnight
                 this_.vertical_input = 0f;
             }
         }
-        public static bool upPressed()
+        public static bool UpPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;
@@ -114,7 +114,7 @@ namespace CelesteKnight
                 return upPressedMoreRecently;
             }
         }
-        public static bool downPressed()
+        public static bool DownPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;
@@ -127,7 +127,7 @@ namespace CelesteKnight
                 return !upPressedMoreRecently;
             }
         }
-        public static bool leftPressed()
+        public static bool LeftPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;
@@ -140,7 +140,7 @@ namespace CelesteKnight
                 return leftPressedMoreRecently;
             }
         }
-        public static bool rightPressed()
+        public static bool RightPressed()
         {
             RefreshInput();
             var inputActions = InputHandler.Instance.inputActions;

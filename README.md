@@ -1,5 +1,5 @@
 # Introduction
-Celeste Knight implements Celeste Movements in Hollow Knight.
+Celeste Knight implements Celeste movements in Hollow Knight.
 
 https://www.youtube.com/watch?v=EWzjTLtzOcM
 

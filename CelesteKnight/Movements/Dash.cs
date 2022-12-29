@@ -91,20 +91,20 @@ namespace CelesteKnight
             {
                 h.FlipSprite();
             }
-            else if (Input.rightPressed())
+            else if (Input.RightPressed())
             {
                 h.FaceRight();
             }
-            else if (Input.leftPressed())
+            else if (Input.LeftPressed())
             {
                 h.FaceLeft();
             }
             h.cState.dashing = true;
             h.dashQueueSteps = 0;
-            dashingUp = Input.upPressed();
-            dashingDown = Input.downPressed();
-            dashingLeft = Input.leftPressed();
-            dashingRight = Input.rightPressed();
+            dashingUp = Input.UpPressed();
+            dashingDown = Input.DownPressed();
+            dashingLeft = Input.LeftPressed();
+            dashingRight = Input.RightPressed();
             if (!dashingUp && !dashingDown && !dashingLeft && !dashingRight)
             {
                 dashingLeft = !h.cState.facingRight;
@@ -385,11 +385,11 @@ namespace CelesteKnight
                 }
                 h.FinishedDashing();
                 var d = (h.cState.facingRight ? 1 : -1);
-                if (Input.leftPressed())
+                if (Input.LeftPressed())
                 {
                     d = -1;
                 }
-                else if (Input.rightPressed())
+                else if (Input.RightPressed())
                 {
                     d = 1;
                 }
